@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Salón de Belleza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+
+    <!-- DASHBOARD PRINCIPAL -->
+    <div id="dashboard-section">
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">💅 Panel Pro de Belleza y Estética</h1>
+                    <nav class="flex gap-2">
+                        <button onclick="cambiarPestana('turnos')" id="nav-btn-turnos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold">Turnos y Agenda</button>
+                        <button onclick="cambiarPestana('catalogo')" id="nav-btn-catalogo" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">Catálogo y Precios</button>
+                        <button onclick="cambiarPestana('estadisticas')" id="nav-btn-estadisticas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">📊 Estadísticas y Ventas</button>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="theme-toggle-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 rounded-md hover:bg-gray-300 text-sm" title="Cambiar Tema">🌙</button>
+                    <button id="logout-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- SECCIÓN 1: TURNOS Y AGENDA -->
+        <main id="seccion-turnos" class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Formulario Turno -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm h-fit border dark:border-gray-700">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Agendar Nuevo Turno</h2>
+                <form id="turno-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Clienta</label>
+                        <input type="text" id="cliente-nombre" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Celular / WhatsApp</label>
+                        <input type="tel" id="cliente-celular" placeholder="Ej: 1123456789" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Seleccionar Servicio / Producto (Catálogo)</label>
+                        <select id="select-catalogo-servicio" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                            <option value="">Cargando catálogo...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio a Cobrar ($)</label>
+                        <input type="number" id="precio-cobrado" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold text-pink-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas / Alergias / Observaciones</label>
+                        <input type="text" id="cliente-notas" placeholder="Ej: Uñas débiles o piel sensible" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha y Hora</label>
+                        <input type="datetime-local" id="fecha-hora" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <button type="submit" class="w-full bg-pink-600 text-white p-2 rounded-md hover:bg-pink-700 font-medium">Guardar Turno</button>
+                </form>
+            </div>
+
+            <!-- Listado y Calendario -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm md:col-span-2 space-y-8 border dark:border-gray-700">
+                <div>
+                    <button id="btn-toggle-calendario" class="w-full bg-pink-50 dark:bg-gray-700 border border-pink-200 dark:border-gray-600 text-pink-700 dark:text-pink-300 font-semibold p-3 rounded-xl hover:bg-pink-100 transition flex justify-between items-center px-4">
+                        <span>📅 Ver Calendario Mensual de Turnos</span>
+                        <span id="icono-flecha">▼</span>
+                    </button>
+
+                    <div id="calendario-container" class="hidden mt-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <button id="mes-anterior" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm font-bold">◀ Mes Ant.</button>
+                            <h3 id="mes-anio-titulo" class="text-base font-bold text-gray-800 dark:text-gray-100 capitalize"></h3>
+                            <button id="mes-siguiente" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm font-bold">Mes Sig. ▶</button>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-gray-500 mb-2">
+                            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+                        </div>
+                        <div id="calendario-grid" class="grid grid-cols-7 gap-1"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+                        <h2 id="titulo-tabla-turnos" class="text-lg font-semibold text-gray-800 dark:text-gray-100">Próximos Turnos (General)</h2>
+                        <div class="flex gap-1 text-xs">
+                            <button onclick="window.filtrarTurnos('todos')" id="btn-filtro-todos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md font-medium">Todos</button>
+                            <button onclick="window.filtrarTurnos('hoy')" id="btn-filtro-hoy" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200">Hoy</button>
+                            <button onclick="window.filtrarTurnos('semana')" id="btn-filtro-semana" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200">Próximos 7 Días</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead>
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta / Celular</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Servicio / Variante</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Fecha y Precio</th>
+                                    <th class="px-3 py-2 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="turnos-tabla" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Historial -->
+                <div class="border-t dark:border-gray-700 pt-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">📋 Historial y Notas de Clientas</h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="buscador-celular" placeholder="Buscar por nombre o celular..." class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm w-full sm:w-64">
+                            <button id="btn-buscar" class="bg-pink-600 text-white px-4 py-2 rounded-md text-sm hover:bg-pink-700 font-medium">Buscar</button>
+                            <button id="btn-limpiar" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-md text-sm">Limpiar</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead>
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Celular</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Servicio / Variante</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Precio / Fecha</th>
+                                    <th class="px-3 py-2 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historial-tabla" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Ingrese un nombre o número para buscar en el historial.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- SECCIÓN 2: CATÁLOGO Y PRECIOS (OCULTO POR DEFECTO) -->
+        <main id="seccion-catalogo" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Gestión de Catálogo, Servicios y Precios</h2>
+                    <p class="text-xs text-gray-500">Crea nuevos servicios, ajusta precios o edita stock de productos de belleza.</p>
+                </div>
+                <button onclick="abrirModalProducto()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-700">+ Agregar Nuevo Servicio/Producto</button>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Categoría</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Nombre del Servicio</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Variante / Talle</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio ($)</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Stock</th>
+                            <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-catalogo-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando catálogo...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- SECCIÓN 3: ESTADÍSTICAS Y MÉTRICAS DE VENTAS (OCULTO POR DEFECTO) -->
+        <main id="seccion-estadisticas" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Recaudación Total Histórica</p>
+                    <h3 id="stat-recaudacion" class="text-3xl font-black text-emerald-500 mt-1">$ 0</h3>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Servicios / Productos Vendidos</p>
+                    <h3 id="stat-servicios-vendidos" class="text-3xl font-black text-pink-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Servicio Estrella / Más Vendido</p>
+                    <h3 id="stat-servicio-estrella" class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-2 truncate">--</h3>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
+                <h3 class="font-bold text-base text-gray-800 dark:text-gray-100">Desglose de Ventas por Producto / Variante</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Servicio / Producto</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Variante</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Cantidad Vendida</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Total Recaudado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-estadisticas-detalle" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr><td colspan="4" class="text-center py-4 text-gray-500">Calculando métricas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: AGREGAR / EDITAR PRODUCTO EN CATÁLOGO -->
+    <div id="modal-producto" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
+                <h3 id="modal-titulo-prod" class="font-bold text-gray-900 dark:text-gray-100">Nuevo Ítem en Catálogo</h3>
+                <button onclick="cerrarModalProducto()" class="text-gray-400 hover:text-white font-bold">✕</button>
+            </div>
+            <form id="form-producto-catalogo" class="space-y-3">
+                <input type="hidden" id="prod-id">
+                <div>
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Categoría</label>
+                    <input type="text" id="prod-categoria" placeholder="Ej: Uñas, Pestañas, Depilación" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Nombre del Servicio / Producto</label>
+                    <input type="text" id="prod-nombre" placeholder="Ej: Soft Gel, Lifting" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Variante / Talle (Opcional)</label>
+                    <input type="text" id="prod-variante" placeholder="Ej: Talle M, Clásico, Bozo" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Precio ($)</label>
+                        <input type="number" id="prod-precio" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Stock (Si es producto físico)</label>
+                        <input type="number" id="prod-stock" value="100" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModalProducto()" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-pink-700">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vinculado al JS de administración power -->
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
