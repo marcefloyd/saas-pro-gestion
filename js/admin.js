@@ -5,6 +5,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_5FHBhxV0i5sM4vzyRlI4Tg_jjC4Y6ip'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+// CONTRASEÑA DE SEGURIDAD PARA ANULAR VENTAS (PIN / PASSWORD MASTER)
+const PIN_SEGURIDAD_ANULACION = "1234" 
+
 const logoutBtn = document.getElementById('logout-btn')
 const turnoForm = document.getElementById('turno-form')
 const turnosTabla = document.getElementById('turnos-tabla')
@@ -34,6 +37,7 @@ let clientesDir = []
 let historialCliCache = []
 let carrito = []
 let ventaCliente = null
+let turnoClienteSeleccionado = null
 let filtroActualTurnos = 'todos'
 
 const byId = id => document.getElementById(id)
@@ -62,8 +66,8 @@ if (logoutBtn) {
 
 async function inicializarSistema() {
     await cargarDatosBase()
+    await cargarClientesDir()
     cargarTurnos()
-    cargarClientesDir()
     cargarVentas()
     cargarHistorialGeneral()
 }
@@ -122,8 +126,8 @@ if (btnMesSiguiente) {
 
 // 2. NAVEGACIÓN ENTRE PESTAÑAS
 window.cambiarPestana = function(pestana) {
-    const activo = "bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold"
-    const inactivo = "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold"
+    const activo = "bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm"
+    const inactivo = "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300"
     ;['turnos', 'ventas', 'catalogo', 'estadisticas'].forEach(p => {
         const sec = document.getElementById(`seccion-${p}`)
         const btn = document.getElementById(`nav-btn-${p}`)
@@ -136,7 +140,7 @@ window.cambiarPestana = function(pestana) {
     else if (pestana === 'estadisticas') calcularEstadisticasVentas()
 }
 
-// 3. CARGAR DATOS BASE (SERVICIOS Y PRODUCTOS POR SEPARADO)
+// 3. CARGAR DATOS BASE
 async function cargarDatosBase() {
     try {
         const [servRes, prodRes] = await Promise.all([
@@ -174,14 +178,24 @@ function poblarSelectorServiciosTurnos() {
     }
 }
 
-// 4. AGENDAR NUEVO TURNO
+// 4. AGENDAR NUEVO TURNO (Con Buscador de Clientas, Descuentos y Método de Pago)
 if (turnoForm) {
     turnoForm.addEventListener('submit', async (e) => {
         e.preventDefault()
-        const nombre = document.getElementById('cliente-nombre').value
-        const celular = document.getElementById('cliente-celular').value
+        const nombre = byId('cliente-nombre-real').value.trim()
+        const celular = byId('cliente-celular-real').value.trim()
+
+        if (!nombre || !celular) {
+            return alert("Por favor seleccione o escriba una clienta válida con nombre y celular.")
+        }
+
         const servicioId = selectCatalogoServicio.value
-        const precioCobrado = parseFloat(inputPrecioCobrado.value) || 0
+        const precioBase = parseFloat(inputPrecioCobrado.value) || 0
+        const vDesc = parseFloat(document.getElementById('turno-descuento').value) || 0
+        const tipoDesc = document.getElementById('turno-desc-tipo').value
+        const montoDesc = tipoDesc === '%' ? (precioBase * vDesc / 100) : vDesc
+        const precioCobrado = Math.max(precioBase - montoDesc, 0)
+        const metodoPago = document.getElementById('turno-metodo-pago').value
         const notas = document.getElementById('cliente-notas').value || "Sin notas"
         const fechaHoraInput = document.getElementById('fecha-hora').value
 
@@ -195,7 +209,7 @@ if (turnoForm) {
                 cliente_nombre: nombre,
                 celular: celular,
                 servicio_id: servicioId,
-                servicio_nombre: itemServicio.nombre,
+                servicio_nombre: `${itemServicio.nombre} (${metodoPago})`,
                 variante: itemServicio.variante || 'Estándar',
                 precio_cobrado: precioCobrado,
                 notas: notas,
@@ -206,7 +220,11 @@ if (turnoForm) {
 
             turnoForm.reset()
             inputPrecioCobrado.value = ""
+            document.getElementById('turno-descuento').value = 0
+            turnoClienteSeleccionado = null
+            renderFichaClienteTurno()
             cargarTurnos()
+            cargarClientesDir()
             alert("¡Turno agendado con éxito!")
         } catch (error) {
             console.error("Error al guardar turno: ", error)
@@ -255,7 +273,7 @@ window.filtrarTurnos = function(tipo) {
     fechaRefTurnos = new Date()
     ;['todos', 'dia', 'semana', 'mes'].forEach(t => {
         const btn = byId(`btn-filtro-${t}`)
-        if (btn) btn.className = (t === tipo) ? "bg-pink-600 text-white px-3 py-1.5 rounded-md font-medium" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200"
+        if (btn) btn.className = (t === tipo) ? "bg-pink-600 text-white px-2.5 py-1 rounded-md font-medium" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-md"
     })
     byId('nav-rango-turnos').classList.toggle('hidden', tipo === 'todos')
     pintarTablaTurnos()
@@ -300,7 +318,7 @@ function pintarTablaTurnos() {
     }
 
     if (filtrados.length === 0) {
-        turnosTabla.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay turnos ${rango ? 'en este período' : 'registrados'}.</td></tr>`
+        turnosTabla.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay turnos en este período.</td></tr>`
         return
     }
 
@@ -310,17 +328,17 @@ function pintarTablaTurnos() {
         if (rango && filtroActualTurnos !== 'dia' && f.toDateString() !== diaPrevio) {
             diaPrevio = f.toDateString()
             const h = document.createElement('tr')
-            h.innerHTML = `<td colspan="4" class="px-3 py-1.5 bg-pink-50 dark:bg-gray-700 text-xs font-bold text-pink-700 dark:text-pink-300 capitalize">${f.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</td>`
+            h.innerHTML = `<td colspan="4" class="px-2.5 py-1.5 bg-pink-50 dark:bg-gray-700 text-xs font-bold text-pink-700 dark:text-pink-300 capitalize">${f.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</td>`
             turnosTabla.appendChild(h)
         }
         const fechaFmt = f.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
         const tr = document.createElement('tr')
         tr.innerHTML = `
-            <td class="px-3 py-3 font-semibold">${t.cliente_nombre}<br><a href="https://wa.me/${t.celular.replace(/\D/g, '')}" target="_blank" class="text-xs text-green-500 font-bold">📱 ${t.celular}</a></td>
-            <td class="px-3 py-3">${t.servicio_nombre} <br><span class="text-xs text-pink-500 font-semibold">${t.variante || ''}</span></td>
-            <td class="px-3 py-3 font-medium">${fechaFmt}<br><strong class="text-emerald-500">$${t.precio_cobrado}</strong></td>
-            <td class="px-3 py-3 text-right space-x-1">
-                <button class="text-green-500 bg-green-50 dark:bg-green-950 px-2 py-1 rounded text-xs font-semibold" onclick="completarTurno('${t.id}')">Completar</button>
+            <td class="px-2.5 py-2.5 font-semibold">${t.cliente_nombre}<br><a href="https://wa.me/${t.celular.replace(/\D/g, '')}" target="_blank" class="text-[11px] text-green-500 font-bold">📱 ${t.celular}</a></td>
+            <td class="px-2.5 py-2.5">${t.servicio_nombre} <br><span class="text-[11px] text-pink-500 font-semibold">${t.variante || ''}</span></td>
+            <td class="px-2.5 py-2.5 font-medium">${fechaFmt}<br><strong class="text-emerald-500">$${t.precio_cobrado}</strong></td>
+            <td class="px-2.5 py-2.5 text-right space-x-1 whitespace-nowrap">
+                <button class="text-green-600 bg-green-50 dark:bg-green-950 px-2 py-1 rounded text-xs font-semibold" onclick="completarTurno('${t.id}')">Completar</button>
                 <button class="text-red-500 bg-red-50 dark:bg-red-950 px-2 py-1 rounded text-xs font-semibold" onclick="cancelarTurno('${t.id}')">Cancelar</button>
             </td>
         `
@@ -342,13 +360,13 @@ function renderizarCalendario() {
 
     for (let i = 0; i < diaInicioSemana; i++) {
         const celdaVacia = document.createElement('div')
-        celdaVacia.className = "h-24 bg-gray-50 dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 opacity-30"
+        celdaVacia.className = "h-20 bg-gray-50 dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 opacity-30"
         calendarioGrid.appendChild(celdaVacia)
     }
 
     for (let dia = 1; dia <= ultimoDiaMes; dia++) {
         const celda = document.createElement('div')
-        celda.className = "h-24 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-1 overflow-y-auto text-xs flex flex-col justify-between"
+        celda.className = "h-20 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-1 overflow-y-auto text-[11px] flex flex-col justify-between"
         
         const numeroDia = document.createElement('div')
         numeroDia.className = "font-bold text-gray-800 dark:text-gray-200 text-right"
@@ -356,14 +374,14 @@ function renderizarCalendario() {
         celda.appendChild(numeroDia)
 
         const contenedorTurnosDia = document.createElement('div')
-        contenedorTurnosDia.className = "space-y-1 mt-1"
+        contenedorTurnosDia.className = "space-y-0.5 mt-0.5"
 
         listaTurnosCache.forEach(turno => {
             const fTurno = new Date(turno.fecha_hora)
             if (fTurno.getDate() === dia && fTurno.getMonth() === mes && fTurno.getFullYear() === anio) {
                 const horaStr = fTurno.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
                 const itemTurno = document.createElement('div')
-                itemTurno.className = "bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 p-1 rounded text-[10px] truncate font-semibold"
+                itemTurno.className = "bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 p-0.5 rounded text-[9px] truncate font-semibold"
                 itemTurno.title = `${horaStr} - ${turno.cliente_nombre} (${turno.servicio_nombre})`
                 itemTurno.textContent = `${horaStr} ${turno.cliente_nombre}`
                 contenedorTurnosDia.appendChild(itemTurno)
@@ -394,7 +412,7 @@ window.completarTurno = async function(id) {
                 subtotal: precioCobrado,
                 descuento: 0,
                 total_cobrado: precioCobrado,
-                metodo_pago: 'Efectivo / Turno',
+                metodo_pago: 'Turno / Servicio',
                 estado: 'COMPLETADA',
                 notas: turno.notas || 'Turno atendido',
                 registrado_el: ahora
@@ -425,13 +443,13 @@ window.completarTurno = async function(id) {
 }
 
 window.cancelarTurno = async function(id) {
-    if (confirm("¿Cancelar este turno?")) {
+    if (confirm("¿Cancelar este turno de la agenda?")) {
         await supabase.from('turnos').delete().eq('id', id)
         cargarTurnos()
     }
 }
 
-// 6. GESTIÓN DE CATÁLOGO (SERVICIOS Y PRODUCTOS)
+// 6. GESTIÓN DE CATÁLOGO
 function renderizarTablasCatalogoAdmin() {
     const tbServ = document.getElementById('tabla-servicios-admin')
     const tbProd = document.getElementById('tabla-productos-admin')
@@ -439,9 +457,9 @@ function renderizarTablasCatalogoAdmin() {
 
     tbServ.innerHTML = serviciosCache.length ? serviciosCache.map(s => `
         <tr>
-            <td class="px-2 py-3"><strong class="text-pink-600">${esc(s.categoria)}</strong><br>${esc(s.nombre)} <span class="text-xs text-gray-400">${esc(s.variante || '')}</span></td>
-            <td class="px-2 py-3 font-bold text-emerald-500">${money(s.precio)}</td>
-            <td class="px-2 py-3 text-right space-x-2">
+            <td class="px-2 py-2.5"><strong class="text-pink-600">${esc(s.categoria)}</strong><br>${esc(s.nombre)} <span class="text-[11px] text-gray-400">${esc(s.variante || '')}</span></td>
+            <td class="px-2 py-2.5 font-bold text-emerald-500">${money(s.precio)}</td>
+            <td class="px-2 py-2.5 text-right space-x-2 whitespace-nowrap">
                 <button onclick="editarCatalogoItem('servicio', '${s.id}')" class="text-blue-500 text-xs font-bold">Editar</button>
                 <button onclick="eliminarCatalogoItem('servicio', '${s.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
             </td>
@@ -449,9 +467,9 @@ function renderizarTablasCatalogoAdmin() {
 
     tbProd.innerHTML = productosCache.length ? productosCache.map(p => `
         <tr>
-            <td class="px-2 py-3"><strong class="text-indigo-600">${esc(p.categoria)}</strong><br>${esc(p.nombre)} <span class="text-xs text-gray-400">${esc(p.variante || '')}</span><br><span class="text-xs font-bold text-pink-600">Stock: ${p.stock}</span></td>
-            <td class="px-2 py-3 font-bold text-emerald-500">${money(p.precio)}</td>
-            <td class="px-2 py-3 text-right space-x-2">
+            <td class="px-2 py-2.5"><strong class="text-indigo-600">${esc(p.categoria)}</strong><br>${esc(p.nombre)} <span class="text-[11px] text-gray-400">${esc(p.variante || '')}</span><br><span class="text-[11px] font-bold text-pink-600">Stock: ${p.stock}</span></td>
+            <td class="px-2 py-2.5 font-bold text-emerald-500">${money(p.precio)}</td>
+            <td class="px-2 py-2.5 text-right space-x-2 whitespace-nowrap">
                 <button onclick="editarCatalogoItem('producto', '${p.id}')" class="text-blue-500 text-xs font-bold">Editar</button>
                 <button onclick="eliminarCatalogoItem('producto', '${p.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
             </td>
@@ -514,7 +532,7 @@ if (formModalCat) {
 }
 
 window.eliminarCatalogoItem = async function(tabla, id) {
-    if (confirm("¿Estás segura de eliminar este ítem?")) {
+    if (confirm("¿Estás seguro de eliminar este ítem?")) {
         await supabase.from(tabla === 'servicio' ? 'servicios' : 'productos').delete().eq('id', id)
         await cargarDatosBase()
         renderizarTablasCatalogoAdmin()
@@ -569,9 +587,9 @@ async function calcularEstadisticasVentas() {
                 const info = conteoVariantes[k]
                 const tr = document.createElement('tr')
                 tr.innerHTML = `
-                    <td class="px-3 py-3 font-semibold" colspan="2">${k}</td>
-                    <td class="px-3 py-3 font-bold">${info.cantidad} unidades</td>
-                    <td class="px-3 py-3 font-black text-emerald-500">$ ${info.recaudacion.toLocaleString()}</td>
+                    <td class="px-3 py-2.5 font-semibold" colspan="2">${k}</td>
+                    <td class="px-3 py-2.5 font-bold">${info.cantidad} unidades</td>
+                    <td class="px-3 py-2.5 font-black text-emerald-500">$ ${info.recaudacion.toLocaleString()}</td>
                 `
                 tbodyEst.appendChild(tr)
             })
@@ -601,11 +619,11 @@ window.verHistorialPorBusqueda = async function(parametro) {
             const fechaFmt = new Date(item.fecha_atencion).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
             const tr = document.createElement('tr')
             tr.innerHTML = `
-                <td class="px-3 py-3 font-bold">${item.cliente}</td>
-                <td class="px-3 py-3">${item.celular}</td>
-                <td class="px-3 py-3">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.item_nombre}</td>
-                <td class="px-3 py-3 font-medium"><strong class="text-emerald-500">$${item.precio_cobrado}</strong><br><span class="text-xs text-gray-400">${fechaFmt}</span></td>
-                <td class="px-3 py-3 text-right">
+                <td class="px-2.5 py-2.5 font-bold">${item.cliente}</td>
+                <td class="px-2.5 py-2.5">${item.celular}</td>
+                <td class="px-2.5 py-2.5">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.item_nombre}</td>
+                <td class="px-2.5 py-2.5 font-medium"><strong class="text-emerald-500">$${item.precio_cobrado}</strong><br><span class="text-[11px] text-gray-400">${fechaFmt}</span></td>
+                <td class="px-2.5 py-2.5 text-right">
                     <button onclick="eliminarHistorial('${item.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
                 </td>
             `
@@ -625,8 +643,8 @@ window.eliminarHistorial = async function(id) {
     }
 }
 
-// 9. PANEL DE VENTAS (POS) EXCLUSIVO PARA PRODUCTOS FÍSICOS
-const clienteKey = (n, c) => digits(c) || String(n || '').toLowerCase()
+// 9. PANEL DE CLIENTES Y BÚSQUEDA INTELIGENTE (CORREGIDO PARA AGRUPAR CORRECTAMENTE POR NOMBRE Y CELULAR)
+const clienteKey = (n, c) => `${String(n || '').trim().toLowerCase()}_${digits(c)}`
 
 async function cargarClientesDir() {
     const [h, t] = await Promise.all([
@@ -645,6 +663,96 @@ async function cargarClientesDir() {
     clientesDir = [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre))
 }
 
+// Búsqueda en Turnos
+function seleccionarClienteTurno(c) {
+    turnoClienteSeleccionado = c ? { nombre: c.nombre, celular: c.celular, key: c.key, nuevo: false } : null
+    byId('turno-cliente-buscar').value = ''
+    byId('turno-cliente-sug').classList.add('hidden')
+    renderFichaClienteTurno()
+}
+
+function renderFichaClienteTurno() {
+    const box = byId('turno-cliente-ficha')
+    const inputNombreReal = byId('cliente-nombre-real')
+    const inputCelReal = byId('cliente-celular-real')
+
+    if (!turnoClienteSeleccionado) {
+        box.innerHTML = `<p class="text-[11px] text-gray-500">👤 Escribí arriba para buscar o registrar clienta.</p>`
+        inputNombreReal.value = ''
+        inputCelReal.value = ''
+        return
+    }
+
+    if (turnoClienteSeleccionado.nuevo) {
+        box.innerHTML = `
+            <p class="text-xs font-bold text-pink-600 mb-1">➕ Nueva clienta a registrar</p>
+            <input id="tc-nombre" placeholder="Nombre y apellido" value="${esc(turnoClienteSeleccionado.nombre)}" class="w-full mb-1 p-1.5 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-xs">
+            <input id="tc-cel" placeholder="Celular / WhatsApp" value="${esc(turnoClienteSeleccionado.celular)}" class="w-full p-1.5 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-xs">
+            <button type="button" onclick="seleccionarClienteTurnoNull()" class="text-[10px] text-gray-500 mt-1 underline">Cancelar</button>`
+        
+        byId('tc-nombre').oninput = e => { turnoClienteSeleccionado.nombre = e.target.value; inputNombreReal.value = e.target.value }
+        byId('tc-cel').oninput = e => { turnoClienteSeleccionado.celular = e.target.value; inputCelReal.value = e.target.value }
+        inputNombreReal.value = turnoClienteSeleccionado.nombre
+        inputCelReal.value = turnoClienteSeleccionado.celular
+        return
+    }
+
+    inputNombreReal.value = turnoClienteSeleccionado.nombre
+    inputCelReal.value = turnoClienteSeleccionado.celular
+
+    // Coincidencia flexible por nombre o por clave exacta en el historial
+    const filas = historialCliCache.filter(r => {
+        const rKey = clienteKey(r.cliente, r.celular)
+        return rKey === turnoClienteSeleccionado.key || String(r.cliente || '').trim().toLowerCase() === String(turnoClienteSeleccionado.nombre || '').trim().toLowerCase()
+    }).sort((a, b) => new Date(b.fecha_atencion) - new Date(a.fecha_atencion))
+
+    const gastado = filas.reduce((s, r) => s + Number(r.precio_cobrado || 0), 0)
+    const fmt = d => new Date(d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: '2-digit' })
+    
+    box.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div><p class="font-bold text-xs">${esc(turnoClienteSeleccionado.nombre)}</p><p class="text-[11px] text-green-500 font-bold">📱 ${esc(turnoClienteSeleccionado.celular)}</p></div>
+            <button type="button" onclick="seleccionarClienteTurnoNull()" class="text-gray-400 hover:text-red-500 font-bold text-xs" title="Quitar">✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-1 text-center mt-1.5 text-[11px]">
+            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${filas.length}</b>visitas previas</div>
+            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-emerald-500">${money(gastado)}</b>histórico</div>
+        </div>
+        ${filas.length ? `<p class="text-[10px] text-gray-500 mt-1">Último servicio: ${esc(filas[0].item_nombre)} (${fmt(filas[0].fecha_atencion)})</p>` : '<p class="text-[10px] text-gray-500 mt-1">Sin visitas registradas aún.</p>'}`
+}
+window.seleccionarClienteTurnoNull = () => seleccionarClienteTurno(null)
+
+function initTurnoClienteBuscador() {
+    const inp = byId('turno-cliente-buscar'), box = byId('turno-cliente-sug')
+    if (!inp || !box) return
+
+    inp.addEventListener('input', () => {
+        const txt = inp.value.trim(), q = txt.toLowerCase(), qd = digits(txt)
+        if (!txt) return box.classList.add('hidden')
+        const res = clientesDir.filter(c => c.nombre.toLowerCase().includes(q) || (qd && digits(c.celular).includes(qd))).slice(0, 6)
+        box.innerHTML = res.map(c => `<button type="button" data-k="${esc(c.key)}" class="w-full text-left px-3 py-2 text-xs hover:bg-pink-50 dark:hover:bg-gray-700 flex justify-between gap-2"><span class="font-semibold">${esc(c.nombre)}</span><span class="text-[11px] text-green-500">${esc(c.celular)}</span></button>`).join('')
+            + `<button type="button" data-nuevo="1" class="w-full text-left px-3 py-2 text-xs text-pink-600 font-semibold hover:bg-pink-50 dark:hover:bg-gray-700 border-t dark:border-gray-700">➕ Clienta nueva: «${esc(txt)}»</button>`
+        box.classList.remove('hidden')
+    })
+
+    box.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return
+        if (b.dataset.nuevo) {
+            const txt = inp.value.trim()
+            const esNumero = /^\d+$/.test(txt)
+            turnoClienteSeleccionado = { 
+                nombre: esNumero ? '' : txt, 
+                celular: esNumero ? txt : '', 
+                nuevo: true 
+            }
+            inp.value = ''; box.classList.add('hidden'); renderFichaClienteTurno()
+        } else seleccionarClienteTurno(clientesDir.find(c => c.key === b.dataset.k))
+    })
+    document.addEventListener('click', e => { if (!e.target.closest('#turno-cliente-wrap')) box.classList.add('hidden') })
+}
+initTurnoClienteBuscador()
+
+// Búsqueda en Ventas (POS)
 function seleccionarCliente(c) {
     ventaCliente = c ? { nombre: c.nombre, celular: c.celular, key: c.key, nuevo: false } : null
     byId('venta-cliente-buscar').value = ''
@@ -655,35 +763,38 @@ function seleccionarCliente(c) {
 function renderFichaCliente() {
     const box = byId('venta-cliente-ficha')
     if (!ventaCliente) {
-        box.innerHTML = `<p class="text-xs text-gray-500">🧾 Consumidor final (la venta no queda en ninguna ficha).</p>`
+        box.innerHTML = `<p class="text-xs text-gray-500">🧾 Consumidor final.</p>`
         return
     }
     if (ventaCliente.nuevo) {
         box.innerHTML = `
-            <p class="text-xs font-bold text-pink-600 mb-2">➕ Clienta nueva</p>
-            <input id="vc-nombre" placeholder="Nombre" value="${esc(ventaCliente.nombre)}" class="w-full mb-2 p-2 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
-            <input id="vc-cel" placeholder="Celular" value="${esc(ventaCliente.celular)}" class="w-full p-2 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
-            <button type="button" onclick="seleccionarClienteNull()" class="text-xs text-gray-500 mt-2 underline">Cancelar</button>`
+            <p class="text-xs font-bold text-pink-600 mb-1.5">➕ Clienta nueva</p>
+            <input id="vc-nombre" placeholder="Nombre" value="${esc(ventaCliente.nombre)}" class="w-full mb-1.5 p-1.5 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
+            <input id="vc-cel" placeholder="Celular" value="${esc(ventaCliente.celular)}" class="w-full p-1.5 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
+            <button type="button" onclick="seleccionarClienteNull()" class="text-[11px] text-gray-500 mt-1 underline">Cancelar</button>`
         byId('vc-nombre').oninput = e => ventaCliente.nombre = e.target.value
         byId('vc-cel').oninput = e => ventaCliente.celular = e.target.value
         return
     }
-    const filas = historialCliCache.filter(r => clienteKey(r.cliente, r.celular) === ventaCliente.key)
-        .sort((a, b) => new Date(b.fecha_atencion) - new Date(a.fecha_atencion))
+    const filas = historialCliCache.filter(r => {
+        const rKey = clienteKey(r.cliente, r.celular)
+        return rKey === ventaCliente.key || String(r.cliente || '').trim().toLowerCase() === String(ventaCliente.nombre || '').trim().toLowerCase()
+    }).sort((a, b) => new Date(b.fecha_atencion) - new Date(a.fecha_atencion))
+
     const gastado = filas.reduce((s, r) => s + Number(r.precio_cobrado || 0), 0)
     const compras = filas.filter(r => (r.notas || '').startsWith('[VENTA')).length
     const fmt = d => new Date(d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: '2-digit' })
     box.innerHTML = `
         <div class="flex justify-between items-start">
-            <div><p class="font-bold">${esc(ventaCliente.nombre)}</p><p class="text-xs text-green-500 font-bold">📱 ${esc(ventaCliente.celular)}</p></div>
-            <button type="button" onclick="seleccionarClienteNull()" class="text-gray-400 hover:text-red-500 font-bold" title="Quitar">✕</button>
+            <div><p class="font-bold text-xs">${esc(ventaCliente.nombre)}</p><p class="text-[11px] text-green-500 font-bold">📱 ${esc(ventaCliente.celular)}</p></div>
+            <button type="button" onclick="seleccionarClienteNull()" class="text-gray-400 hover:text-red-500 font-bold text-xs" title="Quitar">✕</button>
         </div>
-        <div class="grid grid-cols-3 gap-1 text-center mt-2 text-xs">
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${filas.length}</b>registros</div>
+        <div class="grid grid-cols-3 gap-1 text-center mt-2 text-[11px]">
+            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${filas.length}</b>visitas</div>
             <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${compras}</b>compras</div>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-emerald-500">${money(gastado)}</b>gastado</div>
+            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-emerald-500">${money(gastado)}</b>total</div>
         </div>
-        ${filas.length ? `<p class="text-[11px] text-gray-500 mt-2">Último: ${esc(filas[0].item_nombre)} (${fmt(filas[0].fecha_atencion)})</p>` : '<p class="text-[11px] text-gray-500 mt-2">Sin registros.</p>'}`
+        ${filas.length ? `<p class="text-[10px] text-gray-500 mt-1.5">Último: ${esc(filas[0].item_nombre)} (${fmt(filas[0].fecha_atencion)})</p>` : '<p class="text-[10px] text-gray-500 mt-1.5">Sin registros.</p>'}`
 }
 window.seleccionarClienteNull = () => seleccionarCliente(null)
 
@@ -724,7 +835,7 @@ function actualizarInfoProducto() {
     if (!item) { info.textContent = ''; return }
     const disp = Number(item.stock) - enCarrito(item.id)
     info.textContent = `Disponible: ${disp} u.${disp <= 5 ? ' ⚠️ stock bajo' : ''}`
-    info.className = 'text-xs min-h-[1rem] ' + (disp <= 5 ? 'text-amber-500 font-bold' : 'text-gray-500')
+    info.className = 'text-[11px] min-h-[1rem] ' + (disp <= 5 ? 'text-amber-500 font-bold' : 'text-gray-500')
 }
 
 function agregarAlCarrito() {
@@ -756,16 +867,16 @@ function renderCarrito() {
     const tb = byId('venta-carrito')
     tb.innerHTML = carrito.length ? carrito.map((l, i) => `
         <tr>
-            <td class="px-3 py-2 font-semibold">${esc(l.nombre)}<br><span class="text-xs text-pink-500">${esc(l.variante)}</span></td>
-            <td class="px-3 py-2">${money(l.precio)}</td>
-            <td class="px-3 py-2 text-center whitespace-nowrap">
-                <button onclick="ventaCant(${i},-1)" class="bg-gray-200 dark:bg-gray-700 w-6 h-6 rounded font-bold">−</button>
-                <span class="mx-2 font-bold">${l.cantidad}</span>
-                <button onclick="ventaCant(${i},1)" class="bg-gray-200 dark:bg-gray-700 w-6 h-6 rounded font-bold">+</button>
+            <td class="px-2 py-2 font-semibold">${esc(l.nombre)}<br><span class="text-[11px] text-pink-500">${esc(l.variante)}</span></td>
+            <td class="px-2 py-2">${money(l.precio)}</td>
+            <td class="px-2 py-2 text-center whitespace-nowrap">
+                <button onclick="ventaCant(${i},-1)" class="bg-gray-200 dark:bg-gray-700 w-5 h-5 rounded font-bold">−</button>
+                <span class="mx-1.5 font-bold">${l.cantidad}</span>
+                <button onclick="ventaCant(${i},1)" class="bg-gray-200 dark:bg-gray-700 w-5 h-5 rounded font-bold">+</button>
             </td>
-            <td class="px-3 py-2 text-right font-bold text-emerald-500">${money(l.precio * l.cantidad)}</td>
-            <td class="px-3 py-2 text-right"><button onclick="ventaQuitar(${i})" class="text-red-500 font-bold">✕</button></td>
-        </tr>`).join('') : `<tr><td colspan="5" class="text-center py-6 text-gray-500">El carrito está vacío. Agregá productos desde el selector.</td></tr>`
+            <td class="px-2 py-2 text-right font-bold text-emerald-500">${money(l.precio * l.cantidad)}</td>
+            <td class="px-2 py-2 text-right"><button onclick="ventaQuitar(${i})" class="text-red-500 font-bold">✕</button></td>
+        </tr>`).join('') : `<tr><td colspan="5" class="text-center py-5 text-gray-500">El carrito está vacío.</td></tr>`
     actualizarTotales()
     actualizarInfoProducto()
 }
@@ -891,29 +1002,36 @@ function renderVentas() {
     byId('venta-historial-lista').innerHTML = ventasMasterCache.length ? ventasMasterCache.slice(0, 20).map(v => {
         const esAnulada = v.estado === 'ANULADA'
         const fechaFmt = new Date(v.registrado_el).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
-        return `<div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${esAnulada ? 'opacity-50 line-through' : ''}">
+        return `<div class="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${esAnulada ? 'opacity-50 line-through' : ''}">
             <div>
-                <p class="font-semibold">
+                <p class="font-semibold text-xs">
                     #${v.ticket} · ${esc(v.cliente)} 
                     ${esAnulada ? '<span class="bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 no-underline">ANULADA</span>' : ''}
-                    <span class="text-xs text-gray-400 font-normal ml-1">${fechaFmt}</span>
+                    <span class="text-[11px] text-gray-400 font-normal ml-1">${fechaFmt}</span>
                 </p>
-                <p class="text-xs text-gray-500">${esc(v.detalle_items)}</p>
-                <p class="text-xs text-pink-500">${esc(v.metodo_pago)} · Total: ${money(v.total_cobrado)}</p>
+                <p class="text-[11px] text-gray-500">${esc(v.detalle_items)}</p>
+                <p class="text-[11px] text-pink-500">${esc(v.metodo_pago)} · Total: ${money(v.total_cobrado)}</p>
             </div>
             <div class="flex items-center gap-3">
-                <strong class="${esAnulada ? 'text-gray-400' : 'text-emerald-500'}">${money(v.total_cobrado)}</strong>
+                <strong class="${esAnulada ? 'text-gray-400' : 'text-emerald-500'} text-xs">${money(v.total_cobrado)}</strong>
                 ${!esAnulada ? `<button onclick="anularVentaMaster('${v.ticket}')" class="text-red-500 text-xs font-bold no-underline">Anular</button>` : ''}
             </div>
         </div>`
     }).join('') : `<p class="text-center text-gray-500 py-4">Todavía no hay ventas registradas.</p>`
 }
 
-// ANULAR VENTA MASTER CON DEVOLUCIÓN DE STOCK
+// ANULAR VENTA MASTER CON CONTRASEÑA DE SEGURIDAD Y DEVOLUCIÓN DE STOCK
 window.anularVentaMaster = async function(ticket) {
     const v = ventasMasterCache.find(x => x.ticket === ticket)
     if (!v || v.estado === 'ANULADA') return
-    if (!confirm(`¿Anular la venta #${ticket} por ${money(v.total_cobrado)}? Esto marcará la venta como ANULADA y devolverá el stock.`)) return
+
+    const passwordIngresado = prompt(`🔒 SEGURIDAD: Ingrese la contraseña de autorización para anular la venta #${ticket}:`)
+    if (passwordIngresado === null) return
+    if (passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
+        return alert("❌ Contraseña incorrecta. Operación cancelada por seguridad.")
+    }
+
+    if (!confirm(`✔ Contraseña aceptada. ¿Desea anular definitivamente la venta #${ticket} por ${money(v.total_cobrado)}? Esto devolverá el stock al catálogo.`)) return
 
     try {
         const { error: eUpd } = await supabase.from('ventas_master').update({ estado: 'ANULADA' }).eq('ticket', ticket)
@@ -938,7 +1056,10 @@ window.anularVentaMaster = async function(ticket) {
         }
 
         await Promise.all([cargarDatosBase(), cargarClientesDir(), cargarVentas(), cargarHistorialGeneral()])
-        alert(`Venta #${ticket} anulada correctamente.`)
+        alert(`Venta #${ticket} anulada correctamente y stock devuelto.`)
+        if (!byId('modal-buscador-master').classList.contains('hidden')) {
+            filtrarBuscadorMaster()
+        }
     } catch (e) {
         console.error(e)
         alert('Error al anular la venta: ' + (e.message || e))
@@ -964,15 +1085,20 @@ function initVentas() {
         const txt = inp.value.trim(), q = txt.toLowerCase(), qd = digits(txt)
         if (!txt) return box.classList.add('hidden')
         const res = clientesDir.filter(c => c.nombre.toLowerCase().includes(q) || (qd && digits(c.celular).includes(qd))).slice(0, 8)
-        box.innerHTML = res.map(c => `<button type="button" data-k="${esc(c.key)}" class="w-full text-left px-3 py-2 text-sm hover:bg-pink-50 dark:hover:bg-gray-700 flex justify-between gap-2"><span class="font-semibold">${esc(c.nombre)}</span><span class="text-xs text-green-500">${esc(c.celular)}</span></button>`).join('')
-            + `<button type="button" data-nuevo="1" class="w-full text-left px-3 py-2 text-sm text-pink-600 font-semibold hover:bg-pink-50 dark:hover:bg-gray-700 border-t dark:border-gray-700">➕ Clienta nueva: «${esc(txt)}»</button>`
+        box.innerHTML = res.map(c => `<button type="button" data-k="${esc(c.key)}" class="w-full text-left px-3 py-2 text-xs hover:bg-pink-50 dark:hover:bg-gray-700 flex justify-between gap-2"><span class="font-semibold">${esc(c.nombre)}</span><span class="text-[11px] text-green-500">${esc(c.celular)}</span></button>`).join('')
+            + `<button type="button" data-nuevo="1" class="w-full text-left px-3 py-2 text-xs text-pink-600 font-semibold hover:bg-pink-50 dark:hover:bg-gray-700 border-t dark:border-gray-700">➕ Clienta nueva: «${esc(txt)}»</button>`
         box.classList.remove('hidden')
     })
     box.addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return
         if (b.dataset.nuevo) {
             const txt = inp.value.trim()
-            ventaCliente = { nombre: digits(txt).length >= 6 ? '' : txt, celular: digits(txt).length >= 6 ? txt : '', nuevo: true }
+            const esNumero = /^\d+$/.test(txt)
+            ventaCliente = { 
+                nombre: esNumero ? '' : txt, 
+                celular: esNumero ? txt : '', 
+                nuevo: true 
+            }
             inp.value = ''; box.classList.add('hidden'); renderFichaCliente()
         } else seleccionarCliente(clientesDir.find(c => c.key === b.dataset.k))
     })
@@ -1047,24 +1173,25 @@ window.filtrarBuscadorMaster = function() {
         const fechaFmt = new Date(v.registrado_el).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
         return `
             <tr class="${esAnulada ? 'bg-red-50/50 dark:bg-red-950/20 text-gray-400' : ''}">
-                <td class="px-3 py-3 text-xs">
+                <td class="px-3 py-2.5 text-xs">
                     <strong class="text-pink-600">#${v.ticket}</strong><br>
                     <span class="text-gray-400 font-normal">${fechaFmt}</span>
                 </td>
-                <td class="px-3 py-3 font-bold">
+                <td class="px-3 py-2.5 font-bold text-xs">
                     ${esc(v.cliente)}<br>
-                    <span class="text-xs text-green-500 font-normal">📱 ${esc(v.celular)}</span>
+                    <span class="text-[11px] text-green-500 font-normal">📱 ${esc(v.celular)}</span>
                 </td>
-                <td class="px-3 py-3 text-xs">
+                <td class="px-3 py-2.5 text-xs">
                     ${esc(v.detalle_items)}
-                    ${v.notas && v.notas !== 'Sin notas' ? `<br><span class="text-[11px] text-gray-400">Nota: ${esc(v.notas)}</span>` : ''}
+                    ${v.notas && v.notas !== 'Sin notas' ? `<br><span class="text-[10px] text-gray-400">Nota: ${esc(v.notas)}</span>` : ''}
                 </td>
-                <td class="px-3 py-3 text-xs">
+                <td class="px-3 py-2.5 text-xs">
                     <span class="font-semibold">${esc(v.metodo_pago)}</span><br>
                     ${esAnulada ? '<span class="bg-red-100 text-red-700 text-[10px] px-1 py-0.5 rounded font-bold">ANULADA</span>' : '<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1 py-0.5 rounded font-bold">COMPLETADA</span>'}
                 </td>
-                <td class="px-3 py-3 text-right font-black ${esAnulada ? 'line-through text-gray-400' : 'text-emerald-500'}">
-                    ${money(v.total_cobrado)}
+                <td class="px-3 py-2.5 text-right font-black text-xs ${esAnulada ? 'line-through text-gray-400' : 'text-emerald-500'}">
+                    ${money(v.total_cobrado)}<br>
+                    ${!esAnulada ? `<button onclick="anularVentaMaster('${v.ticket}')" class="text-red-500 text-[11px] font-bold no-underline mt-1">Anular</button>` : ''}
                 </td>
             </tr>
         `

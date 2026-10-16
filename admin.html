@@ -14,85 +14,107 @@
     <!-- DASHBOARD PRINCIPAL -->
     <div id="dashboard-section">
         <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
-              <button onclick="abrirBuscadorMaestro()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1 m-4">
-            🔍 Buscador Master & Cierres de Caja
-              </button>
-              <style>
-    @media print {
-        body * { visibility: hidden; }
-        #modal-buscador-master, #modal-buscador-master * { visibility: visible; }
-        #modal-buscador-master {
-            position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important;
-        }
-        #modal-buscador-master button { display: none !important; }
-    }
-</style>
-            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">💅 Panel Pro de Belleza y Estética</h1>
-                    <nav class="flex gap-2">
-                        <button onclick="cambiarPestana('turnos')" id="nav-btn-turnos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold">Turnos y Agenda</button>
-                        <button onclick="cambiarPestana('ventas')" id="nav-btn-ventas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">🛒 Ventas (POS)</button>
-                        <button onclick="cambiarPestana('catalogo')" id="nav-btn-catalogo" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">Catálogo y Precios</button>
-                        <button onclick="cambiarPestana('estadisticas')" id="nav-btn-estadisticas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">📊 Estadísticas</button>
-                    </nav>
+            <style>
+                @media print {
+                    body * { visibility: hidden; }
+                    #modal-buscador-master, #modal-buscador-master * { visibility: visible; }
+                    #modal-buscador-master {
+                        position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important;
+                    }
+                    #modal-buscador-master button { display: none !important; }
+                }
+            </style>
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="flex flex-col sm:flex-row items-center justify-between w-full md:w-auto gap-3">
+                    <h1 class="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100 text-center sm:text-left">💅 Panel Pro de Belleza</h1>
+                    <button onclick="abrirBuscadorMaestro()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1">
+                        🔍 Buscador Master & Cierres
+                    </button>
                 </div>
-                <div class="flex items-center gap-3">
+                
+                <!-- Navegación Adaptable en Móviles -->
+                <nav class="flex flex-wrap justify-center gap-1.5 w-full md:w-auto overflow-x-auto py-1">
+                    <button onclick="cambiarPestana('turnos')" id="nav-btn-turnos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm">Turnos y Agenda</button>
+                    <button onclick="cambiarPestana('ventas')" id="nav-btn-ventas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">🛒 Ventas (POS)</button>
+                    <button onclick="cambiarPestana('catalogo')" id="nav-btn-catalogo" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">Catálogo</button>
+                    <button onclick="cambiarPestana('estadisticas')" id="nav-btn-estadisticas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">📊 Estadísticas</button>
+                </nav>
+
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
                     <button id="theme-toggle-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 rounded-md hover:bg-gray-300 text-sm" title="Cambiar Tema">🌙</button>
-                    <button id="logout-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium">Cerrar Sesión</button>
+                    <button id="logout-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-300 text-xs font-medium">Cerrar Sesión</button>
                 </div>
             </div>
         </header>
 
         <!-- SECCIÓN 1: TURNOS Y AGENDA -->
-        <main id="seccion-turnos" class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm h-fit border dark:border-gray-700">
-                <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Agendar Nuevo Turno</h2>
-                <form id="turno-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Clienta</label>
-                        <input type="text" id="cliente-nombre" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+        <main id="seccion-turnos" class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm h-fit border dark:border-gray-700">
+                <h2 class="text-base font-semibold mb-3 text-gray-800 dark:text-gray-100">Agendar Nuevo Turno</h2>
+                <form id="turno-form" class="space-y-3">
+                    <!-- Buscador Inteligente de Clienta para Turnos -->
+                    <div id="turno-cliente-wrap" class="relative space-y-1.5">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Clienta (Nombre o Celular)</label>
+                        <input type="text" id="turno-cliente-buscar" autocomplete="off" placeholder="Escribí nombre o celular..." required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
+                        <div id="turno-cliente-sug" class="hidden absolute z-20 left-0 right-0 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-md shadow-lg max-h-56 overflow-y-auto"></div>
+                        <div id="turno-cliente-ficha" class="rounded-lg border border-dashed dark:border-gray-600 p-2.5 text-xs">
+                            <p class="text-[11px] text-gray-500">👤 Escribí arriba para buscar o registrar clienta.</p>
+                        </div>
                     </div>
+                    <input type="hidden" id="cliente-nombre-real">
+                    <input type="hidden" id="cliente-celular-real">
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Celular / WhatsApp</label>
-                        <input type="tel" id="cliente-celular" placeholder="Ej: 1123456789" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Seleccionar Servicio</label>
-                        <select id="select-catalogo-servicio" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Seleccionar Servicio</label>
+                        <select id="select-catalogo-servicio" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
                             <option value="">Cargando servicios...</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio a Cobrar ($)</label>
-                        <input type="number" id="precio-cobrado" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold text-pink-600">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Precio Base ($)</label>
+                            <input type="number" id="precio-cobrado" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold text-pink-600 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Descuento</label>
+                            <div class="flex gap-1 mt-1">
+                                <input type="number" id="turno-descuento" min="0" value="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
+                                <select id="turno-desc-tipo" class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs"><option value="%">%</option><option value="$">$</option></select>
+                            </div>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas / Alergias / Observaciones</label>
-                        <input type="text" id="cliente-notas" placeholder="Ej: Uñas débiles o piel sensible" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Medio de Pago</label>
+                        <select id="turno-metodo-pago" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
+                            <option>Efectivo</option><option>Transferencia</option><option>Débito</option><option>Crédito</option><option>Mercado Pago</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha y Hora</label>
-                        <input type="datetime-local" id="fecha-hora" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Notas / Alergias / Observaciones</label>
+                        <input type="text" id="cliente-notas" placeholder="Ej: Uñas débiles o piel sensible" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
                     </div>
-                    <button type="submit" class="w-full bg-pink-600 text-white p-2 rounded-md hover:bg-pink-700 font-medium">Guardar Turno</button>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Fecha y Hora</label>
+                        <input type="datetime-local" id="fecha-hora" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
+                    </div>
+                    <button type="submit" class="w-full bg-pink-600 text-white p-2.5 rounded-md hover:bg-pink-700 font-medium text-sm">Guardar Turno</button>
                 </form>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm md:col-span-2 space-y-8 border dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm lg:col-span-2 space-y-6 border dark:border-gray-700">
                 <div>
-                    <button id="btn-toggle-calendario" class="w-full bg-pink-50 dark:bg-gray-700 border border-pink-200 dark:border-gray-600 text-pink-700 dark:text-pink-300 font-semibold p-3 rounded-xl hover:bg-pink-100 transition flex justify-between items-center px-4">
+                    <button id="btn-toggle-calendario" class="w-full bg-pink-50 dark:bg-gray-700 border border-pink-200 dark:border-gray-600 text-pink-700 dark:text-pink-300 font-semibold p-2.5 rounded-xl hover:bg-pink-100 transition flex justify-between items-center px-4 text-xs sm:text-sm">
                         <span>📅 Ver Calendario Mensual de Turnos</span>
                         <span id="icono-flecha">▼</span>
                     </button>
 
-                    <div id="calendario-container" class="hidden mt-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <button id="mes-anterior" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm font-bold">◀ Mes Ant.</button>
-                            <h3 id="mes-anio-titulo" class="text-base font-bold text-gray-800 dark:text-gray-100 capitalize"></h3>
-                            <button id="mes-siguiente" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm font-bold">Mes Sig. ▶</button>
+                    <div id="calendario-container" class="hidden mt-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-3 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <button id="mes-anterior" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs font-bold">◀ Ant.</button>
+                            <h3 id="mes-anio-titulo" class="text-sm font-bold text-gray-800 dark:text-gray-100 capitalize"></h3>
+                            <button id="mes-siguiente" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs font-bold">Sig. ▶</button>
                         </div>
-                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-gray-500 mb-2">
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-gray-500 mb-2">
                             <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
                         </div>
                         <div id="calendario-grid" class="grid grid-cols-7 gap-1"></div>
@@ -100,60 +122,60 @@
                 </div>
 
                 <div>
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
-                        <h2 id="titulo-tabla-turnos" class="text-lg font-semibold text-gray-800 dark:text-gray-100">Próximos Turnos (General)</h2>
-                        <div class="flex flex-col items-end gap-2">
-                            <div class="flex gap-1 text-xs">
-                                <button onclick="window.filtrarTurnos('todos')" id="btn-filtro-todos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md font-medium">Todos</button>
-                                <button onclick="window.filtrarTurnos('dia')" id="btn-filtro-dia" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200">Ver día</button>
-                                <button onclick="window.filtrarTurnos('semana')" id="btn-filtro-semana" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200">Ver semana</button>
-                                <button onclick="window.filtrarTurnos('mes')" id="btn-filtro-mes" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-200">Ver mes</button>
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2">
+                        <h2 id="titulo-tabla-turnos" class="text-base font-semibold text-gray-800 dark:text-gray-100">Próximos Turnos (General)</h2>
+                        <div class="flex flex-col items-end gap-1.5 w-full sm:w-auto">
+                            <div class="flex flex-wrap gap-1 text-[11px]">
+                                <button onclick="window.filtrarTurnos('todos')" id="btn-filtro-todos" class="bg-pink-600 text-white px-2.5 py-1 rounded-md font-medium">Todos</button>
+                                <button onclick="window.filtrarTurnos('dia')" id="btn-filtro-dia" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-md">Día</button>
+                                <button onclick="window.filtrarTurnos('semana')" id="btn-filtro-semana" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-md">Semana</button>
+                                <button onclick="window.filtrarTurnos('mes')" id="btn-filtro-mes" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-md">Mes</button>
                             </div>
-                            <div id="nav-rango-turnos" class="hidden flex items-center gap-2 text-xs">
-                                <button onclick="moverRangoTurnos(-1)" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-bold">◀</button>
-                                <button onclick="moverRangoTurnos(0)" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-semibold">Hoy</button>
-                                <button onclick="moverRangoTurnos(1)" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-bold">▶</button>
-                                <span id="rango-turnos-label" class="font-semibold text-pink-600 capitalize"></span>
+                            <div id="nav-rango-turnos" class="hidden flex items-center gap-1.5 text-xs">
+                                <button onclick="moverRangoTurnos(-1)" class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-bold">◀</button>
+                                <button onclick="moverRangoTurnos(0)" class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-semibold">Hoy</button>
+                                <button onclick="moverRangoTurnos(1)" class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-bold">▶</button>
+                                <span id="rango-turnos-label" class="font-semibold text-pink-600 capitalize text-xs"></span>
                             </div>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                             <thead>
                                 <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta / Celular</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Servicio / Variante</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Fecha y Precio</th>
-                                    <th class="px-3 py-2 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Acciones</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta / Celular</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Servicio</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Fecha y Total</th>
+                                    <th class="px-2 py-2 text-right font-bold text-gray-700 dark:text-gray-300 uppercase">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="turnos-tabla" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm"></tbody>
+                            <tbody id="turnos-tabla" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="border-t dark:border-gray-700 pt-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">📋 Historial y Notas de Clientas</h2>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <input type="text" id="buscador-celular" placeholder="Buscar por nombre o celular..." class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm w-full sm:w-64">
-                            <button id="btn-buscar" class="bg-pink-600 text-white px-4 py-2 rounded-md text-sm hover:bg-pink-700 font-medium">Buscar</button>
-                            <button id="btn-limpiar" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-md text-sm">Limpiar</button>
+                <div class="border-t dark:border-gray-700 pt-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
+                        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">📋 Historial y Notas de Clientas</h2>
+                        <div class="flex gap-1.5 w-full sm:w-auto">
+                            <input type="text" id="buscador-celular" placeholder="Buscar por nombre o celular..." class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs w-full sm:w-56">
+                            <button id="btn-buscar" class="bg-pink-600 text-white px-3 py-2 rounded-md text-xs hover:bg-pink-700 font-medium">Buscar</button>
+                            <button id="btn-limpiar" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-2 rounded-md text-xs">Limpiar</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                             <thead>
                                 <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Celular</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Servicio / Variante</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Precio / Fecha</th>
-                                    <th class="px-3 py-2 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Acción</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Clienta</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Celular</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Detalle</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-700 dark:text-gray-300 uppercase">Monto / Fecha</th>
+                                    <th class="px-2 py-2 text-right font-bold text-gray-700 dark:text-gray-300 uppercase">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="historial-tabla" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                                <tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Ingrese un nombre o número para buscar en el historial.</td></tr>
+                            <tbody id="historial-tabla" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">Ingrese un nombre o número para buscar en el historial.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -162,119 +184,119 @@
         </main>
 
         <!-- SECCIÓN: PUNTO DE VENTA -->
-        <main id="seccion-ventas" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-xs font-bold text-gray-400 uppercase">Ventas de hoy</p><h3 id="vs-hoy" class="text-2xl font-black text-emerald-500 mt-1">$ 0</h3></div>
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-xs font-bold text-gray-400 uppercase">Tickets hoy</p><h3 id="vs-tickets" class="text-2xl font-black text-pink-600 mt-1">0</h3></div>
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-xs font-bold text-gray-400 uppercase">Unidades hoy</p><h3 id="vs-unidades" class="text-2xl font-black text-pink-600 mt-1">0</h3></div>
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-xs font-bold text-gray-400 uppercase">Ventas del mes</p><h3 id="vs-mes" class="text-2xl font-black text-emerald-500 mt-1">$ 0</h3></div>
+        <main id="seccion-ventas" class="max-w-7xl mx-auto px-4 py-6 hidden space-y-5">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-[11px] font-bold text-gray-400 uppercase">Ventas de hoy</p><h3 id="vs-hoy" class="text-xl font-black text-emerald-500 mt-1">$ 0</h3></div>
+                <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-[11px] font-bold text-gray-400 uppercase">Tickets hoy</p><h3 id="vs-tickets" class="text-xl font-black text-pink-600 mt-1">0</h3></div>
+                <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-[11px] font-bold text-gray-400 uppercase">Unidades hoy</p><h3 id="vs-unidades" class="text-xl font-black text-pink-600 mt-1">0</h3></div>
+                <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border dark:border-gray-700 shadow-sm"><p class="text-[11px] font-bold text-gray-400 uppercase">Ventas del mes</p><h3 id="vs-mes" class="text-xl font-black text-emerald-500 mt-1">$ 0</h3></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm h-fit border dark:border-gray-700 space-y-5">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">🛒 Nueva Venta de Productos</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm h-fit border dark:border-gray-700 space-y-4">
+                    <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">🛒 Nueva Venta de Productos</h2>
 
-                    <div id="venta-cliente-wrap" class="relative space-y-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Clienta (nombre o celular)</label>
-                        <input type="text" id="venta-cliente-buscar" autocomplete="off" placeholder="Empezá a escribir..." class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                        <div id="venta-cliente-sug" class="hidden absolute z-20 left-0 right-0 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-md shadow-lg max-h-64 overflow-y-auto"></div>
-                        <div id="venta-cliente-ficha" class="rounded-lg border border-dashed dark:border-gray-600 p-3"></div>
+                    <div id="venta-cliente-wrap" class="relative space-y-1.5">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Clienta (nombre o celular)</label>
+                        <input type="text" id="venta-cliente-buscar" autocomplete="off" placeholder="Empezá a escribir..." class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
+                        <div id="venta-cliente-sug" class="hidden absolute z-20 left-0 right-0 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-md shadow-lg max-h-56 overflow-y-auto"></div>
+                        <div id="venta-cliente-ficha" class="rounded-lg border border-dashed dark:border-gray-600 p-2.5"></div>
                     </div>
 
-                    <div class="space-y-2 border-t dark:border-gray-700 pt-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Producto Físico</label>
+                    <div class="space-y-2 border-t dark:border-gray-700 pt-3">
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Producto Físico</label>
                         <div class="grid grid-cols-2 gap-2">
                             <select id="venta-filtro-categoria" class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"></select>
                             <input type="text" id="venta-buscar-producto" placeholder="Filtrar..." class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
                         </div>
-                        <select id="venta-select-producto" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"><option value="">Cargando productos...</option></select>
-                        <p id="venta-info-producto" class="text-xs text-gray-500 min-h-[1rem]"></p>
+                        <select id="venta-select-producto" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"><option value="">Cargando productos...</option></select>
+                        <p id="venta-info-producto" class="text-[11px] text-gray-500 min-h-[1rem]"></p>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-xs text-gray-500">Precio unit. ($)</label><input type="number" id="venta-precio-unit" min="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-pink-600 font-bold text-sm"></div>
-                            <div><label class="text-xs text-gray-500">Cantidad</label><input type="number" id="venta-cantidad" min="1" value="1" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"></div>
+                            <div><label class="text-[11px] text-gray-500">Precio unit. ($)</label><input type="number" id="venta-precio-unit" min="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-pink-600 font-bold text-xs"></div>
+                            <div><label class="text-[11px] text-gray-500">Cantidad</label><input type="number" id="venta-cantidad" min="1" value="1" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"></div>
                         </div>
-                        <button type="button" id="venta-btn-agregar" class="w-full bg-pink-600 text-white p-2 rounded-md hover:bg-pink-700 font-medium">+ Agregar al carrito</button>
+                        <button type="button" id="venta-btn-agregar" class="w-full bg-pink-600 text-white p-2 rounded-md hover:bg-pink-700 font-medium text-xs">+ Agregar al carrito</button>
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm md:col-span-2 border dark:border-gray-700 space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Detalle de la venta</h2>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm lg:col-span-2 border dark:border-gray-700 space-y-4">
+                    <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Detalle de la venta</h2>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                             <thead><tr>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Producto</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio</th>
-                                <th class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase">Cant.</th>
-                                <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Subtotal</th>
+                                <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Producto</th>
+                                <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Precio</th>
+                                <th class="px-2 py-2 text-center font-bold text-gray-500 uppercase">Cant.</th>
+                                <th class="px-2 py-2 text-right font-bold text-gray-500 uppercase">Subtotal</th>
                                 <th></th>
                             </tr></thead>
                             <tbody id="venta-carrito" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
                         </table>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-700 pt-4">
-                        <div class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-700 pt-3">
+                        <div class="space-y-2.5">
                             <div>
-                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Descuento</label>
+                                <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Descuento</label>
                                 <div class="flex gap-1 mt-1">
-                                    <input type="number" id="venta-descuento" min="0" value="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
-                                    <select id="venta-desc-tipo" class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm"><option value="%">%</option><option value="$">$</option></select>
+                                    <input type="number" id="venta-descuento" min="0" value="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
+                                    <select id="venta-desc-tipo" class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs"><option value="%">%</option><option value="$">$</option></select>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Medio de pago</label>
-                                <select id="venta-metodo" class="w-full mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
+                                <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Medio de pago</label>
+                                <select id="venta-metodo" class="w-full mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
                                     <option>Efectivo</option><option>Transferencia</option><option>Débito</option><option>Crédito</option><option>Mercado Pago</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Paga con ($) <span class="text-gray-400">(para el vuelto)</span></label>
-                                <input type="number" id="venta-recibido" min="0" class="w-full mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
-                                <p id="venta-vuelto" class="text-xs font-bold text-amber-500 mt-1"></p>
+                                <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Paga con ($) <span class="text-gray-400">(vuelto)</span></label>
+                                <input type="number" id="venta-recibido" min="0" class="w-full mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
+                                <p id="venta-vuelto" class="text-[11px] font-bold text-amber-500 mt-1"></p>
                             </div>
-                            <input type="text" id="venta-nota" placeholder="Nota de la venta (opcional)" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
+                            <input type="text" id="venta-nota" placeholder="Nota de venta (opcional)" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-xs">
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 space-y-2 h-fit">
-                            <div class="flex justify-between text-sm"><span>Subtotal</span><span id="venta-subtotal">$0</span></div>
-                            <div class="flex justify-between text-sm text-red-500"><span>Descuento</span><span id="venta-desc-monto">- $0</span></div>
-                            <div class="flex justify-between text-2xl font-black text-emerald-500 border-t dark:border-gray-700 pt-2"><span>TOTAL</span><span id="venta-total">$0</span></div>
-                            <button type="button" id="venta-btn-confirmar" class="w-full bg-emerald-600 text-white p-3 rounded-md hover:bg-emerald-700 font-bold mt-2">✔ Confirmar venta</button>
-                            <button type="button" id="venta-btn-vaciar" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 rounded-md text-xs font-semibold">Vaciar carrito</button>
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-3.5 space-y-2 h-fit">
+                            <div class="flex justify-between text-xs"><span>Subtotal</span><span id="venta-subtotal">$0</span></div>
+                            <div class="flex justify-between text-xs text-red-500"><span>Descuento</span><span id="venta-desc-monto">- $0</span></div>
+                            <div class="flex justify-between text-xl font-black text-emerald-500 border-t dark:border-gray-700 pt-2"><span>TOTAL</span><span id="venta-total">$0</span></div>
+                            <button type="button" id="venta-btn-confirmar" class="w-full bg-emerald-600 text-white p-2.5 rounded-md hover:bg-emerald-700 font-bold mt-1 text-xs">✔ Confirmar venta</button>
+                            <button type="button" id="venta-btn-vaciar" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 rounded-md text-[11px] font-semibold">Vaciar carrito</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-                <h3 class="font-bold text-base text-gray-800 dark:text-gray-100 mb-3">🧾 Últimas ventas</h3>
-                <div id="venta-historial-lista" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm"></div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700">
+                <h3 class="font-bold text-sm text-gray-800 dark:text-gray-100 mb-2">🧾 Últimas ventas</h3>
+                <div id="venta-historial-lista" class="divide-y divide-gray-200 dark:divide-gray-700 text-xs"></div>
             </div>
         </main>
 
         <!-- SECCIÓN 2: CATÁLOGO Y PRECIOS -->
-        <main id="seccion-catalogo" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 flex justify-between items-center">
+        <main id="seccion-catalogo" class="max-w-7xl mx-auto px-4 py-6 hidden space-y-5">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Gestión de Catálogo, Servicios y Precios</h2>
-                    <p class="text-xs text-gray-500">Crea nuevos servicios o productos físicos con su respectivo tipo.</p>
+                    <h2 class="text-base font-bold text-gray-800 dark:text-gray-100">Gestión de Catálogo y Precios</h2>
+                    <p class="text-[11px] text-gray-500">Crea o edita servicios para turnos y productos físicos con stock.</p>
                 </div>
-                <button onclick="abrirModalCatalogo('servicio')" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-700">+ Agregar Nuevo Ítem</button>
+                <button onclick="abrirModalCatalogo('servicio')" class="bg-pink-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold hover:bg-pink-700">+ Agregar Nuevo Ítem</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Tabla Servicios -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700 space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-base text-pink-600">💅 Servicios (Agenda)</h3>
-                        <button onclick="abrirModalCatalogo('servicio')" class="text-xs bg-pink-100 text-pink-700 px-2.5 py-1 rounded font-bold">+ Nuevo Servicio</button>
+                        <h3 class="font-bold text-sm text-pink-600">💅 Servicios (Agenda)</h3>
+                        <button onclick="abrirModalCatalogo('servicio')" class="text-[11px] bg-pink-100 text-pink-700 px-2.5 py-1 rounded font-bold">+ Nuevo</button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
                             <thead>
                                 <tr>
-                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Categoría / Nombre</th>
-                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio</th>
-                                    <th class="px-2 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Categoría / Nombre</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Precio</th>
+                                    <th class="px-2 py-2 text-right font-bold text-gray-500 uppercase">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-servicios-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -285,18 +307,18 @@
                 </div>
 
                 <!-- Tabla Productos -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700 space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-base text-indigo-600">📦 Productos (POS / Stock)</h3>
-                        <button onclick="abrirModalCatalogo('producto')" class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded font-bold">+ Nuevo Producto</button>
+                        <h3 class="font-bold text-sm text-indigo-600">📦 Productos (POS / Stock)</h3>
+                        <button onclick="abrirModalCatalogo('producto')" class="text-[11px] bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded font-bold">+ Nuevo</button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
                             <thead>
                                 <tr>
-                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Nombre / Stock</th>
-                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio</th>
-                                    <th class="px-2 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Nombre / Stock</th>
+                                    <th class="px-2 py-2 text-left font-bold text-gray-500 uppercase">Precio</th>
+                                    <th class="px-2 py-2 text-right font-bold text-gray-500 uppercase">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-productos-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -309,32 +331,32 @@
         </main>
 
         <!-- SECCIÓN 3: ESTADÍSTICAS Y MÉTRICAS -->
-        <main id="seccion-estadisticas" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Recaudación Total Histórica</p>
-                    <h3 id="stat-recaudacion" class="text-3xl font-black text-emerald-500 mt-1">$ 0</h3>
+        <main id="seccion-estadisticas" class="max-w-7xl mx-auto px-4 py-6 hidden space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-[11px] font-bold text-gray-400 uppercase">Recaudación Total Histórica</p>
+                    <h3 id="stat-recaudacion" class="text-2xl font-black text-emerald-500 mt-1">$ 0</h3>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Atenciones / Ventas Concretadas</p>
-                    <h3 id="stat-servicios-vendidos" class="text-3xl font-black text-pink-600 mt-1">0</h3>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-[11px] font-bold text-gray-400 uppercase">Atenciones / Ventas Concretadas</p>
+                    <h3 id="stat-servicios-vendidos" class="text-2xl font-black text-pink-600 mt-1">0</h3>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Servicio / Producto Estrella</p>
-                    <h3 id="stat-servicio-estrella" class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-2 truncate">--</h3>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border dark:border-gray-700 shadow-sm">
+                    <p class="text-[11px] font-bold text-gray-400 uppercase">Servicio / Producto Estrella</p>
+                    <h3 id="stat-servicio-estrella" class="text-sm font-bold text-gray-800 dark:text-gray-100 mt-2 truncate">--</h3>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
-                <h3 class="font-bold text-base text-gray-800 dark:text-gray-100">Desglose de Ventas y Servicios</h3>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700 space-y-3">
+                <h3 class="font-bold text-sm text-gray-800 dark:text-gray-100">Desglose de Ventas y Servicios</h3>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                         <thead>
                             <tr>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Ítem</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Variante</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Cantidad</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Total Recaudado</th>
+                                <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Ítem</th>
+                                <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Variante</th>
+                                <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Cantidad</th>
+                                <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Total Recaudado</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-estadisticas-detalle" class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -348,39 +370,39 @@
 
     <!-- MODAL: AGREGAR / EDITAR SERVICIO O PRODUCTO -->
     <div id="modal-catalogo" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
-                <h3 id="modal-titulo-cat" class="font-bold text-gray-900 dark:text-gray-100">Nuevo Ítem</h3>
+        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-md p-5 space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-2.5">
+                <h3 id="modal-titulo-cat" class="font-bold text-sm text-gray-900 dark:text-gray-100">Nuevo Ítem</h3>
                 <button onclick="cerrarModalCatalogo()" class="text-gray-400 hover:text-white font-bold">✕</button>
             </div>
-            <form id="form-modal-catalogo" class="space-y-3">
+            <form id="form-modal-catalogo" class="space-y-2.5">
                 <input type="hidden" id="cat-id">
                 <input type="hidden" id="cat-tipo-tabla">
                 <div>
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Categoría</label>
-                    <input type="text" id="cat-categoria" placeholder="Ej: Uñas, Pestañas, Depilación" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Categoría</label>
+                    <input type="text" id="cat-categoria" placeholder="Ej: Uñas, Pestañas" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Nombre</label>
-                    <input type="text" id="cat-nombre" placeholder="Ej: Soft Gel, Esmalte" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+                    <input type="text" id="cat-nombre" placeholder="Ej: Soft Gel" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Variante / Talle (Opcional)</label>
-                    <input type="text" id="cat-variante" placeholder="Ej: Talle M, Clásico" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Variante / Talle (Opcional)</label>
+                    <input type="text" id="cat-variante" placeholder="Ej: Talle M, Clásico" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Precio ($)</label>
-                        <input type="number" id="cat-precio" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                        <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Precio ($)</label>
+                        <input type="number" id="cat-precio" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
                     </div>
                     <div id="campo-stock-wrap">
-                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Stock</label>
-                        <input type="number" id="cat-stock" placeholder="Ej: 15" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                        <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">Stock</label>
+                        <input type="number" id="cat-stock" placeholder="Ej: 15" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
                     </div>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModalCatalogo()" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
-                    <button type="submit" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-pink-700">Guardar</button>
+                    <button type="button" onclick="cerrarModalCatalogo()" class="bg-gray-200 dark:bg-gray-700 px-3.5 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="bg-pink-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold hover:bg-pink-700">Guardar</button>
                 </div>
             </form>
         </div>
@@ -388,13 +410,13 @@
 
     <!-- MODAL: BUSCADOR AVANZADO DE VENTAS MASTER Y CIERRES -->
     <div id="modal-buscador-master" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-5xl p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
-                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">🔍 Auditoría, Cierres de Caja y Buscador Master</h3>
+        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-5xl p-5 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-2.5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-gray-100">🔍 Auditoría, Cierres de Caja y Buscador Master</h3>
                 <button onclick="cerrarBuscadorMaestro()" class="text-gray-400 hover:text-red-500 font-bold text-lg">✕</button>
             </div>
             
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                 <input type="text" id="master-input-buscar" oninput="filtrarBuscadorMaster()" placeholder="Buscar por clienta, celular o ticket..." class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs w-full">
                 
                 <select id="master-filtro-periodo" onchange="filtrarBuscadorMaster()" class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
@@ -416,20 +438,20 @@
                 </button>
             </div>
 
-            <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex justify-between items-center text-xs font-bold">
+            <div class="bg-gray-50 dark:bg-gray-900 p-2.5 rounded-lg flex justify-between items-center text-xs font-bold">
                 <span id="master-resumen-label" class="text-gray-500">Mostrando registros filtrados:</span>
                 <span id="master-resumen-total" class="text-emerald-500 text-sm">$ 0</span>
             </div>
 
             <div class="overflow-y-auto flex-1 border dark:border-gray-700 rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm">
                     <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0">
                         <tr>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Ticket / Fecha</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Clienta</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Detalle de Ítems</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Pago / Estado</th>
-                            <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Total</th>
+                            <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Ticket / Fecha</th>
+                            <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Clienta</th>
+                            <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Detalle de Ítems</th>
+                            <th class="px-3 py-2 text-left font-bold text-gray-500 uppercase">Pago / Estado</th>
+                            <th class="px-3 py-2 text-right font-bold text-gray-500 uppercase">Total / Anular</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-buscador-master" class="divide-y divide-gray-200 dark:divide-gray-700">
