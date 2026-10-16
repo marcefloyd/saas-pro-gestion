@@ -26,9 +26,16 @@ const btnMesSiguiente = document.getElementById('mes-siguiente')
 
 let fechaActualCalendario = new Date()
 let listaTurnosCache = []
-let catalogoCache = []
+let serviciosCache = []
+let productosCache = []
 let historialGlobalCache = []
+let ventasMasterCache = []
+let clientesDir = []
+let historialCliCache = []
+let carrito = []
+let ventaCliente = null
 let filtroActualTurnos = 'todos'
+
 const byId = id => document.getElementById(id)
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const money = n => '$' + Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })
@@ -38,7 +45,7 @@ const digits = s => String(s || '').replace(/\D/g, '')
 async function verificarSesion() {
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error || !session) {
-        window.location.href = 'login.html'
+        window.location.href = 'index.html'
     } else {
         inicializarSistema()
     }
@@ -49,12 +56,12 @@ verificarSesion()
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut()
-        window.location.href = 'login.html'
+        window.location.href = 'index.html'
     })
 }
 
 async function inicializarSistema() {
-    await cargarCatalogo()
+    await cargarDatosBase()
     cargarTurnos()
     cargarClientesDir()
     cargarVentas()
@@ -113,49 +120,57 @@ if (btnMesSiguiente) {
     })
 }
 
-// 2. NAVEGACIÓN ENTRE PESTAÑAS (5 PANELERAS)
+// 2. NAVEGACIÓN ENTRE PESTAÑAS
 window.cambiarPestana = function(pestana) {
     const activo = "bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold"
     const inactivo = "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold"
-    ;['turnos', 'ventas', 'historial', 'catalogo', 'estadisticas'].forEach(p => {
+    ;['turnos', 'ventas', 'catalogo', 'estadisticas'].forEach(p => {
         const sec = document.getElementById(`seccion-${p}`)
         const btn = document.getElementById(`nav-btn-${p}`)
         if (sec) sec.classList.toggle('hidden', p !== pestana)
         if (btn) btn.className = p === pestana ? activo : inactivo
     })
     if (pestana === 'turnos') cargarTurnos()
-    else if (pestana === 'ventas') { cargarCatalogo(); cargarClientesDir(); cargarVentas() }
-    else if (pestana === 'historial') cargarHistorialGeneral()
-    else if (pestana === 'catalogo') renderizarTablaCatalogoAdmin()
+    else if (pestana === 'ventas') { cargarDatosBase(); cargarClientesDir(); cargarVentas() }
+    else if (pestana === 'catalogo') renderizarTablasCatalogoAdmin()
     else if (pestana === 'estadisticas') calcularEstadisticasVentas()
 }
 
-// 3. CARGAR CATÁLOGO EN SELECT
-async function cargarCatalogo() {
+// 3. CARGAR DATOS BASE (SERVICIOS Y PRODUCTOS POR SEPARADO)
+async function cargarDatosBase() {
     try {
-        const { data, error } = await supabase.from('ejemplo_catalogo').select('*').order('categoria', { ascending: true })
-        if (error) throw error
-        catalogoCache = data || []
-        poblarVentas()
+        const [servRes, prodRes] = await Promise.all([
+            supabase.from('servicios').select('*').order('categoria', { ascending: true }),
+            supabase.from('productos').select('*').order('categoria', { ascending: true })
+        ])
+        if (servRes.error) throw servRes.error
+        if (prodRes.error) throw prodRes.error
 
-        if (selectCatalogoServicio) {
-            selectCatalogoServicio.innerHTML = `<option value="">-- Selecciona un servicio o producto --</option>`
-            catalogoCache.forEach(item => {
-                const opt = document.createElement('option')
-                opt.value = item.id
-                opt.textContent = `[${item.categoria}] ${item.nombre} ${item.variante ? ' - ' + item.variante : ''} ($${item.precio})`
-                selectCatalogoServicio.appendChild(opt)
-            })
+        serviciosCache = servRes.data || []
+        productosCache = prodRes.data || []
 
-            selectCatalogoServicio.onchange = (e) => {
-                const seleccionado = catalogoCache.find(i => i.id === e.target.value)
-                if (seleccionado && inputPrecioCobrado) {
-                    inputPrecioCobrado.value = seleccionado.precio
-                }
-            }
-        }
+        poblarSelectorServiciosTurnos()
+        poblarVentasProductos()
     } catch (err) {
-        console.error("Error cargando catálogo:", err)
+        console.error("Error cargando base de datos:", err)
+    }
+}
+
+function poblarSelectorServiciosTurnos() {
+    if (!selectCatalogoServicio) return
+    selectCatalogoServicio.innerHTML = `<option value="">-- Selecciona un servicio --</option>`
+    serviciosCache.forEach(item => {
+        const opt = document.createElement('option')
+        opt.value = item.id
+        opt.textContent = `[${item.categoria}] ${item.nombre} ${item.variante ? ' - ' + item.variante : ''} ($${item.precio})`
+        selectCatalogoServicio.appendChild(opt)
+    })
+
+    selectCatalogoServicio.onchange = (e) => {
+        const seleccionado = serviciosCache.find(i => i.id === e.target.value)
+        if (seleccionado && inputPrecioCobrado) {
+            inputPrecioCobrado.value = seleccionado.precio
+        }
     }
 }
 
@@ -170,14 +185,14 @@ if (turnoForm) {
         const notas = document.getElementById('cliente-notas').value || "Sin notas"
         const fechaHoraInput = document.getElementById('fecha-hora').value
 
-        const itemServicio = catalogoCache.find(i => i.id === servicioId)
+        const itemServicio = serviciosCache.find(i => i.id === servicioId)
         if (!itemServicio) return alert("Selecciona un servicio válido.")
 
         try {
             const fechaHoraFormateada = new Date(fechaHoraInput).toISOString()
 
-            const { error } = await supabase.from('ejemplo_turnos').insert([{
-                cliente: nombre,
+            const { error } = await supabase.from('turnos').insert([{
+                cliente_nombre: nombre,
                 celular: celular,
                 servicio_id: servicioId,
                 servicio_nombre: itemServicio.nombre,
@@ -200,10 +215,10 @@ if (turnoForm) {
     })
 }
 
-// 5. CARGAR TURNOS ACTIVOS Y CALENDARIO
+// 5. CARGAR TURNOS Y CALENDARIO
 async function cargarTurnos() {
     try {
-        const { data, error } = await supabase.from('ejemplo_turnos').select('*').order('fecha_hora', { ascending: true })
+        const { data, error } = await supabase.from('turnos').select('*').order('fecha_hora', { ascending: true })
         if (error) throw error
         listaTurnosCache = data || []
         pintarTablaTurnos()
@@ -301,7 +316,7 @@ function pintarTablaTurnos() {
         const fechaFmt = f.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
         const tr = document.createElement('tr')
         tr.innerHTML = `
-            <td class="px-3 py-3 font-semibold">${t.cliente}<br><a href="https://wa.me/${t.celular.replace(/\D/g, '')}" target="_blank" class="text-xs text-green-500 font-bold">📱 ${t.celular}</a></td>
+            <td class="px-3 py-3 font-semibold">${t.cliente_nombre}<br><a href="https://wa.me/${t.celular.replace(/\D/g, '')}" target="_blank" class="text-xs text-green-500 font-bold">📱 ${t.celular}</a></td>
             <td class="px-3 py-3">${t.servicio_nombre} <br><span class="text-xs text-pink-500 font-semibold">${t.variante || ''}</span></td>
             <td class="px-3 py-3 font-medium">${fechaFmt}<br><strong class="text-emerald-500">$${t.precio_cobrado}</strong></td>
             <td class="px-3 py-3 text-right space-x-1">
@@ -349,8 +364,8 @@ function renderizarCalendario() {
                 const horaStr = fTurno.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
                 const itemTurno = document.createElement('div')
                 itemTurno.className = "bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 p-1 rounded text-[10px] truncate font-semibold"
-                itemTurno.title = `${horaStr} - ${turno.cliente} (${turno.servicio_nombre})`
-                itemTurno.textContent = `${horaStr} ${turno.cliente}`
+                itemTurno.title = `${horaStr} - ${turno.cliente_nombre} (${turno.servicio_nombre})`
+                itemTurno.textContent = `${horaStr} ${turno.cliente_nombre}`
                 contenedorTurnosDia.appendChild(itemTurno)
             }
         })
@@ -360,29 +375,48 @@ function renderizarCalendario() {
     }
 }
 
+// COMPLETAR TURNO: Inyecta en ventas_master e historial_clientes
 window.completarTurno = async function(id) {
     const turno = listaTurnosCache.find(t => t.id == id)
     if (!turno) return alert("Error: No se encontró el turno.")
 
-    if (confirm(`¿Marcar el turno de ${turno.cliente} como atendido y registrarlo en las estadísticas de ventas?`)) {
+    if (confirm(`¿Marcar el turno de ${turno.cliente_nombre} como atendido e ingresarlo a Cierres Master?`)) {
         try {
-            const { error: errorHistorial } = await supabase.from('ejemplo_historial').insert([{
-                cliente: turno.cliente,
-                celular: turno.celular,
-                servicio_id: turno.servicio_id || null,
-                servicio_nombre: turno.servicio_nombre,
-                variante: turno.variante || 'Estándar',
-                precio_cobrado: Number(turno.precio_cobrado) || 0,
-                notas: turno.notas || 'Sin notas',
-                fecha_atencion: turno.fecha_hora
-            }])
+            const ticket = Date.now().toString(36).toUpperCase().slice(-6)
+            const ahora = new Date().toISOString()
+            const precioCobrado = Number(turno.precio_cobrado) || 0
 
+            const { error: eMaster } = await supabase.from('ventas_master').insert([{
+                ticket: ticket,
+                cliente: turno.cliente_nombre,
+                celular: turno.celular,
+                detalle_items: `1x ${turno.servicio_nombre} (${turno.variante || 'Estándar'})`,
+                subtotal: precioCobrado,
+                descuento: 0,
+                total_cobrado: precioCobrado,
+                metodo_pago: 'Efectivo / Turno',
+                estado: 'COMPLETADA',
+                notas: turno.notas || 'Turno atendido',
+                registrado_el: ahora
+            }])
+            if (eMaster) throw eMaster
+
+            const { error: errorHistorial } = await supabase.from('historial_clientes').insert([{
+                cliente: turno.cliente_nombre,
+                celular: turno.celular,
+                item_nombre: `${turno.servicio_nombre} (${turno.variante || 'Estándar'})`,
+                variante: turno.variante || 'Estándar',
+                precio_cobrado: precioCobrado,
+                notas: `[VENTA #${ticket}] Turno atendido · ${turno.notas || 'Sin notas'}`,
+                fecha_atencion: ahora
+            }])
             if (errorHistorial) throw errorHistorial
 
-            const { error: errorBorrar } = await supabase.from('ejemplo_turnos').delete().eq('id', id)
+            const { error: errorBorrar } = await supabase.from('turnos').delete().eq('id', id)
             if (errorBorrar) throw errorBorrar
 
-            cargarTurnos()
+            await Promise.all([cargarTurnos(), cargarVentas(), cargarHistorialGeneral()])
+            alert(`¡Turno completado! Ticket #${ticket} registrado en el Master.`)
         } catch (e) { 
             console.error("Error al completar turno:", e)
             alert("Hubo un error al completar el turno.") 
@@ -392,97 +426,105 @@ window.completarTurno = async function(id) {
 
 window.cancelarTurno = async function(id) {
     if (confirm("¿Cancelar este turno?")) {
-        await supabase.from('ejemplo_turnos').delete().eq('id', id)
+        await supabase.from('turnos').delete().eq('id', id)
         cargarTurnos()
     }
 }
 
-// 6. GESTIÓN DE CATÁLOGO (ADMIN)
-function renderizarTablaCatalogoAdmin() {
-    const tbody = document.getElementById('tabla-catalogo-admin')
-    if (!tbody) return
-    tbody.innerHTML = ""
+// 6. GESTIÓN DE CATÁLOGO (SERVICIOS Y PRODUCTOS)
+function renderizarTablasCatalogoAdmin() {
+    const tbServ = document.getElementById('tabla-servicios-admin')
+    const tbProd = document.getElementById('tabla-productos-admin')
+    if (!tbServ || !tbProd) return
 
-    if (catalogoCache.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">Sin ítems en catálogo.</td></tr>`
-        return
-    }
-
-    catalogoCache.forEach(item => {
-        const tr = document.createElement('tr')
-        tr.innerHTML = `
-            <td class="px-3 py-3 font-bold text-pink-500">${item.categoria}</td>
-            <td class="px-3 py-3 font-semibold">${item.nombre}</td>
-            <td class="px-3 py-3 text-xs">${item.variante || 'N/A'}</td>
-            <td class="px-3 py-3 font-bold text-emerald-500">$${item.precio}</td>
-            <td class="px-3 py-3">${item.stock}</td>
-            <td class="px-3 py-3 text-right space-x-2">
-                <button onclick="editarProducto('${item.id}')" class="text-blue-500 text-xs font-bold">Editar</button>
-                <button onclick="eliminarProducto('${item.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
+    tbServ.innerHTML = serviciosCache.length ? serviciosCache.map(s => `
+        <tr>
+            <td class="px-2 py-3"><strong class="text-pink-600">${esc(s.categoria)}</strong><br>${esc(s.nombre)} <span class="text-xs text-gray-400">${esc(s.variante || '')}</span></td>
+            <td class="px-2 py-3 font-bold text-emerald-500">${money(s.precio)}</td>
+            <td class="px-2 py-3 text-right space-x-2">
+                <button onclick="editarCatalogoItem('servicio', '${s.id}')" class="text-blue-500 text-xs font-bold">Editar</button>
+                <button onclick="eliminarCatalogoItem('servicio', '${s.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
             </td>
-        `
-        tbody.appendChild(tr)
-    })
+        </tr>`).join('') : `<tr><td colspan="3" class="text-center py-4 text-gray-500">Sin servicios.</td></tr>`
+
+    tbProd.innerHTML = productosCache.length ? productosCache.map(p => `
+        <tr>
+            <td class="px-2 py-3"><strong class="text-indigo-600">${esc(p.categoria)}</strong><br>${esc(p.nombre)} <span class="text-xs text-gray-400">${esc(p.variante || '')}</span><br><span class="text-xs font-bold text-pink-600">Stock: ${p.stock}</span></td>
+            <td class="px-2 py-3 font-bold text-emerald-500">${money(p.precio)}</td>
+            <td class="px-2 py-3 text-right space-x-2">
+                <button onclick="editarCatalogoItem('producto', '${p.id}')" class="text-blue-500 text-xs font-bold">Editar</button>
+                <button onclick="eliminarCatalogoItem('producto', '${p.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
+            </td>
+        </tr>`).join('') : `<tr><td colspan="3" class="text-center py-4 text-gray-500">Sin productos.</td></tr>`
 }
 
-window.abrirModalProducto = function() {
-    document.getElementById('form-producto-catalogo').reset()
-    document.getElementById('prod-id').value = ""
-    document.getElementById('modal-titulo-prod').textContent = "Nuevo Ítem en Catálogo"
-    document.getElementById('modal-producto').classList.remove('hidden')
+window.abrirModalCatalogo = function(tipoTabla, id = null) {
+    document.getElementById('form-modal-catalogo').reset()
+    document.getElementById('cat-id').value = id || ''
+    document.getElementById('cat-tipo-tabla').value = tipoTabla
+    const wrapStock = document.getElementById('campo-stock-wrap')
+    wrapStock.style.display = tipoTabla === 'producto' ? 'block' : 'none'
+    document.getElementById('cat-stock').required = tipoTabla === 'producto'
+
+    if (id) {
+        const item = (tipoTabla === 'servicio' ? serviciosCache : productosCache).find(i => i.id === id)
+        if (item) {
+            document.getElementById('cat-categoria').value = item.categoria
+            document.getElementById('cat-nombre').value = item.nombre
+            document.getElementById('cat-variante').value = item.variante || ''
+            document.getElementById('cat-precio').value = item.precio
+            if (tipoTabla === 'producto') document.getElementById('cat-stock').value = item.stock
+            document.getElementById('modal-titulo-cat').textContent = `Editar ${tipoTabla === 'servicio' ? 'Servicio' : 'Producto'}`
+        }
+    } else {
+        document.getElementById('modal-titulo-cat').textContent = `Nuevo ${tipoTabla === 'servicio' ? 'Servicio' : 'Producto'}`
+    }
+    document.getElementById('modal-catalogo').classList.remove('hidden')
 }
 
-window.cerrarModalProducto = function() {
-    document.getElementById('modal-producto').classList.add('hidden')
+window.cerrarModalCatalogo = function() {
+    document.getElementById('modal-catalogo').classList.add('hidden')
 }
 
-window.editarProducto = function(id) {
-    const item = catalogoCache.find(i => i.id === id)
-    if (!item) return
-    document.getElementById('prod-id').value = item.id
-    document.getElementById('prod-categoria').value = item.categoria
-    document.getElementById('prod-nombre').value = item.nombre
-    document.getElementById('prod-variante').value = item.variante || ''
-    document.getElementById('prod-precio').value = item.precio
-    document.getElementById('prod-stock').value = item.stock
-    document.getElementById('modal-titulo-prod').textContent = "Editar Ítem"
-    document.getElementById('modal-producto').classList.remove('hidden')
-}
+window.editarCatalogoItem = (tabla, id) => abrirModalCatalogo(tabla, id)
 
-const formProd = document.getElementById('form-producto-catalogo')
-if (formProd) {
-    formProd.onsubmit = async (e) => {
+const formModalCat = document.getElementById('form-modal-catalogo')
+if (formModalCat) {
+    formModalCat.onsubmit = async (e) => {
         e.preventDefault()
-        const id = document.getElementById('prod-id').value
-        const categoria = document.getElementById('prod-categoria').value
-        const nombre = document.getElementById('prod-nombre').value
-        const variante = document.getElementById('prod-variante').value
-        const precio = parseFloat(document.getElementById('prod-precio').value)
-        const stock = parseInt(document.getElementById('prod-stock').value)
+        const id = document.getElementById('cat-id').value
+        const tabla = document.getElementById('cat-tipo-tabla').value
+        const categoria = document.getElementById('cat-categoria').value
+        const nombre = document.getElementById('cat-nombre').value
+        const variante = document.getElementById('cat-variante').value
+        const precio = parseFloat(document.getElementById('cat-precio').value)
+        const stock = tabla === 'producto' ? parseInt(document.getElementById('cat-stock').value) || 0 : null
+
+        const payload = tabla === 'producto' ? { categoria, nombre, variante, precio, stock } : { categoria, nombre, variante, precio }
 
         if (id) {
-            await supabase.from('ejemplo_catalogo').update({ categoria, nombre, variante, precio, stock }).eq('id', id)
+            await supabase.from(tabla === 'servicio' ? 'servicios' : 'productos').update(payload).eq('id', id)
         } else {
-            await supabase.from('ejemplo_catalogo').insert([{ categoria, nombre, variante, precio, stock }])
+            await supabase.from(tabla === 'servicio' ? 'servicios' : 'productos').insert([payload])
         }
-        cerrarModalProducto()
-        cargarCatalogo()
-        renderizarTablaCatalogoAdmin()
+        cerrarModalCatalogo()
+        await cargarDatosBase()
+        renderizarTablasCatalogoAdmin()
     }
 }
 
-window.eliminarProducto = async function(id) {
-    if (confirm("¿Eliminar este servicio del catálogo?")) {
-        await supabase.from('ejemplo_catalogo').delete().eq('id', id)
-        cargarCatalogo()
-        renderizarTablaCatalogoAdmin()
+window.eliminarCatalogoItem = async function(tabla, id) {
+    if (confirm("¿Estás segura de eliminar este ítem?")) {
+        await supabase.from(tabla === 'servicio' ? 'servicios' : 'productos').delete().eq('id', id)
+        await cargarDatosBase()
+        renderizarTablasCatalogoAdmin()
     }
 }
 
 // 7. ESTADÍSTICAS Y MÉTRICAS
 async function calcularEstadisticasVentas() {
     try {
-        const { data: historial, error } = await supabase.from('ejemplo_historial').select('*')
+        const { data: historial, error } = await supabase.from('historial_clientes').select('*')
         if (error) throw error
 
         let totalRecaudado = 0
@@ -492,7 +534,7 @@ async function calcularEstadisticasVentas() {
         if (historial) {
             historial.forEach(h => {
                 totalRecaudado += Number(h.precio_cobrado || 0)
-                const clave = `${h.servicio_nombre} (${h.variante || 'Estándar'})`
+                const clave = h.item_nombre || 'General'
                 if (!conteoVariantes[clave]) {
                     conteoVariantes[clave] = { cantidad: 0, recaudacion: 0 }
                 }
@@ -504,7 +546,7 @@ async function calcularEstadisticasVentas() {
         document.getElementById('stat-recaudacion').textContent = `$ ${totalRecaudado.toLocaleString()}`
         document.getElementById('stat-servicios-vendidos').textContent = totalServicios
 
-        let servicioEstrella = "Sin ventas registradas"
+        let servicioEstrella = "Sin registros"
         let maxCant = -1
         for (let k in conteoVariantes) {
             if (conteoVariantes[k].cantidad > maxCant) {
@@ -519,20 +561,15 @@ async function calcularEstadisticasVentas() {
             tbodyEst.innerHTML = ""
             const keys = Object.keys(conteoVariantes)
             if (keys.length === 0) {
-                tbodyEst.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Aún no hay ventas en el historial.</td></tr>`
+                tbodyEst.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Aún no hay registros.</td></tr>`
                 return
             }
 
             keys.forEach(k => {
-                const parts = k.split(' (')
-                const nombreServ = parts[0]
-                const varianteServ = parts[1].replace(')', '')
                 const info = conteoVariantes[k]
-
                 const tr = document.createElement('tr')
                 tr.innerHTML = `
-                    <td class="px-3 py-3 font-semibold">${nombreServ}</td>
-                    <td class="px-3 py-3 text-pink-500 font-bold">${varianteServ}</td>
+                    <td class="px-3 py-3 font-semibold" colspan="2">${k}</td>
                     <td class="px-3 py-3 font-bold">${info.cantidad} unidades</td>
                     <td class="px-3 py-3 font-black text-emerald-500">$ ${info.recaudacion.toLocaleString()}</td>
                 `
@@ -542,7 +579,7 @@ async function calcularEstadisticasVentas() {
     } catch (e) { console.error("Error calculando estadísticas:", e) }
 }
 
-// 8. BUSCADOR RÁPIDO DE HISTORIAL (EN SECCIÓN TURNOS)
+// 8. BUSCADOR RÁPIDO DE HISTORIAL
 window.verHistorialPorBusqueda = async function(parametro) {
     const texto = parametro || buscadorCelular.value.trim()
     if (!texto) return alert("Ingrese un nombre o celular.")
@@ -551,7 +588,7 @@ window.verHistorialPorBusqueda = async function(parametro) {
     historialTabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Buscando...</td></tr>`
 
     try {
-        const { data, error } = await supabase.from('ejemplo_historial').select('*').or(`cliente.ilike.%${texto}%,celular.ilike.%${texto}%`).order('completado_el', { ascending: false })
+        const { data, error } = await supabase.from('historial_clientes').select('*').or(`cliente.ilike.%${texto}%,celular.ilike.%${texto}%`).order('fecha_atencion', { ascending: false })
         if (error) throw error
 
         historialTabla.innerHTML = ""
@@ -566,7 +603,7 @@ window.verHistorialPorBusqueda = async function(parametro) {
             tr.innerHTML = `
                 <td class="px-3 py-3 font-bold">${item.cliente}</td>
                 <td class="px-3 py-3">${item.celular}</td>
-                <td class="px-3 py-3">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.servicio_nombre} <span class="text-xs text-pink-500 font-semibold">(${item.variante || ''})</span></td>
+                <td class="px-3 py-3">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.item_nombre}</td>
                 <td class="px-3 py-3 font-medium"><strong class="text-emerald-500">$${item.precio_cobrado}</strong><br><span class="text-xs text-gray-400">${fechaFmt}</span></td>
                 <td class="px-3 py-3 text-right">
                     <button onclick="eliminarHistorial('${item.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
@@ -583,26 +620,27 @@ if (btnLimpiar) btnLimpiar.onclick = () => { buscadorCelular.value = ''; histori
 
 window.eliminarHistorial = async function(id) {
     if (confirm("¿Borrar este registro del historial?")) {
-        await supabase.from('ejemplo_historial').delete().eq('id', id)
+        await supabase.from('historial_clientes').delete().eq('id', id)
         window.verHistorialPorBusqueda(buscadorCelular.value.trim())
     }
 }
 
-// ================= 9. PANEL DE VENTAS (POS) CON RESPALDO MASTER =================
-let carrito = [], ventaCliente = null, clientesDir = [], historialCliCache = [], ventasMasterCache = []
+// 9. PANEL DE VENTAS (POS) EXCLUSIVO PARA PRODUCTOS FÍSICOS
 const clienteKey = (n, c) => digits(c) || String(n || '').toLowerCase()
 
 async function cargarClientesDir() {
     const [h, t] = await Promise.all([
-        supabase.from('ejemplo_historial').select('id,cliente,celular,servicio_nombre,variante,precio_cobrado,fecha_atencion,notas'),
-        supabase.from('ejemplo_turnos').select('cliente,celular')
+        supabase.from('historial_clientes').select('id,cliente,celular,item_nombre,precio_cobrado,fecha_atencion,notas'),
+        supabase.from('turnos').select('cliente_nombre,celular')
     ])
     historialCliCache = h.data || []
     const mapa = new Map()
     for (const r of [...historialCliCache, ...(t.data || [])]) {
-        if (!r.cliente || r.cliente === 'Consumidor final') continue
-        const key = clienteKey(r.cliente, r.celular)
-        if (!mapa.has(key)) mapa.set(key, { key, nombre: r.cliente, celular: r.celular || '' })
+        const cliNombre = r.cliente || r.cliente_nombre
+        if (!cliNombre || cliNombre === 'Consumidor final') continue
+        const cliCel = r.celular || ''
+        const key = clienteKey(cliNombre, cliCel)
+        if (!mapa.has(key)) mapa.set(key, { key, nombre: cliNombre, celular: cliCel })
     }
     clientesDir = [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre))
 }
@@ -622,7 +660,7 @@ function renderFichaCliente() {
     }
     if (ventaCliente.nuevo) {
         box.innerHTML = `
-            <p class="text-xs font-bold text-pink-600 mb-2">➕ Clienta nueva (se crea su ficha al confirmar)</p>
+            <p class="text-xs font-bold text-pink-600 mb-2">➕ Clienta nueva</p>
             <input id="vc-nombre" placeholder="Nombre" value="${esc(ventaCliente.nombre)}" class="w-full mb-2 p-2 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
             <input id="vc-cel" placeholder="Celular" value="${esc(ventaCliente.celular)}" class="w-full p-2 border dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm">
             <button type="button" onclick="seleccionarClienteNull()" class="text-xs text-gray-500 mt-2 underline">Cancelar</button>`
@@ -642,18 +680,18 @@ function renderFichaCliente() {
         </div>
         <div class="grid grid-cols-3 gap-1 text-center mt-2 text-xs">
             <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${filas.length}</b>registros</div>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${compras}</b>productos</div>
+            <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-pink-600">${compras}</b>compras</div>
             <div class="bg-gray-50 dark:bg-gray-900 rounded p-1"><b class="block text-emerald-500">${money(gastado)}</b>gastado</div>
         </div>
-        ${filas.length ? `<p class="text-[11px] text-gray-500 mt-2">Último: ${esc(filas[0].servicio_nombre)} (${fmt(filas[0].fecha_atencion)})</p>` : '<p class="text-[11px] text-gray-500 mt-2">Sin registros previos.</p>'}`
+        ${filas.length ? `<p class="text-[11px] text-gray-500 mt-2">Último: ${esc(filas[0].item_nombre)} (${fmt(filas[0].fecha_atencion)})</p>` : '<p class="text-[11px] text-gray-500 mt-2">Sin registros.</p>'}`
 }
 window.seleccionarClienteNull = () => seleccionarCliente(null)
 
-function poblarVentas() {
+function poblarVentasProductos() {
     const selCat = byId('venta-filtro-categoria')
     if (!selCat || !byId('venta-select-producto')) return
     const previa = selCat.value
-    const cats = [...new Set(catalogoCache.map(i => i.categoria))].sort()
+    const cats = [...new Set(productosCache.map(i => i.categoria))].sort()
     selCat.innerHTML = `<option value="">Todas las categorías</option>` + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')
     selCat.value = cats.includes(previa) ? previa : ''
     filtrarSelectorVentas()
@@ -664,7 +702,12 @@ function filtrarSelectorVentas() {
     const cat = byId('venta-filtro-categoria').value
     const q = byId('venta-buscar-producto').value.trim().toLowerCase()
     const previo = sel.value
-    const lista = catalogoCache.filter(i => (!cat || i.categoria === cat) && (!q || `${i.nombre} ${i.variante || ''} ${i.categoria}`.toLowerCase().includes(q)))
+    
+    const lista = productosCache.filter(i => 
+        (!cat || i.categoria === cat) && 
+        (!q || `${i.nombre} ${i.variante || ''} ${i.categoria}`.toLowerCase().includes(q))
+    )
+
     sel.innerHTML = `<option value="">-- Elegí un producto (${lista.length}) --</option>` + lista.map(i => {
         const sin = Number(i.stock) <= 0
         return `<option value="${esc(i.id)}" ${sin ? 'disabled' : ''}>${esc(i.nombre)}${i.variante ? ' - ' + esc(i.variante) : ''} · ${money(i.precio)} · ${sin ? 'SIN STOCK' : 'stock ' + i.stock}</option>`
@@ -673,7 +716,7 @@ function filtrarSelectorVentas() {
     actualizarInfoProducto()
 }
 
-const itemSeleccionado = () => catalogoCache.find(i => String(i.id) === byId('venta-select-producto').value)
+const itemSeleccionado = () => productosCache.find(i => String(i.id) === byId('venta-select-producto').value)
 const enCarrito = id => carrito.filter(l => String(l.id) === String(id)).reduce((s, l) => s + l.cantidad, 0)
 
 function actualizarInfoProducto() {
@@ -701,7 +744,7 @@ function agregarAlCarrito() {
 }
 
 window.ventaCant = function(i, d) {
-    const l = carrito[i], item = catalogoCache.find(x => String(x.id) === String(l.id))
+    const l = carrito[i], item = productosCache.find(x => String(x.id) === String(l.id))
     if (d > 0 && item && enCarrito(l.id) >= Number(item.stock)) return alert('No hay más stock disponible.')
     l.cantidad += d
     if (l.cantidad < 1) carrito.splice(i, 1)
@@ -744,26 +787,29 @@ function actualizarTotales() {
     byId('venta-vuelto').textContent = isNaN(rec) || t.total <= 0 ? '' : (rec >= t.total ? 'Vuelto: ' + money(rec - t.total) : 'Faltan ' + money(t.total - rec))
 }
 
-// --- Confirmar venta impactando en Historial + Tabla Maestra Master ---
+// CONFIRMAR VENTA EN POS
 async function confirmarVenta() {
     if (!carrito.length) return alert('El carrito está vacío.')
     let nombre = 'Consumidor final', celular = '-'
     if (ventaCliente) {
         nombre = (ventaCliente.nombre || '').trim()
         celular = (ventaCliente.celular || '').trim()
-        if (!nombre || !celular) return alert('Completá nombre y celular de la clienta nueva.')
+        if (!nombre || !celular) return alert('Completá nombre y celular de la clienta.')
     }
     const btn = byId('venta-btn-confirmar')
     btn.disabled = true
     try {
-        const { data: frescos, error: eStock } = await supabase.from('ejemplo_catalogo').select('id,stock').in('id', [...new Set(carrito.map(l => l.id))])
+        const { data: frescos, error: eStock } = await supabase.from('productos').select('id,stock').in('id', [...new Set(carrito.map(l => l.id))])
         if (eStock) throw eStock
-        const stockDe = id => Number((frescos.find(f => String(f.id) === String(id)) || {}).stock ?? -1)
+        const obtenerProd = id => frescos.find(f => String(f.id) === String(id)) || {}
+
         for (const id of new Set(carrito.map(l => l.id))) {
-            if (stockDe(id) < enCarrito(id)) {
+            const prodCat = obtenerProd(id)
+            const stockActual = Number(prodCat.stock ?? 0)
+            if (stockActual < enCarrito(id)) {
                 const l = carrito.find(x => String(x.id) === String(id))
-                alert(`Stock insuficiente de "${l.nombre}". Disponible: ${Math.max(stockDe(id), 0)}`)
-                await cargarCatalogo()
+                alert(`Stock insuficiente de "${l.nombre}". Disponible: ${Math.max(stockActual, 0)}`)
+                await cargarDatosBase()
                 return
             }
         }
@@ -776,11 +822,9 @@ async function confirmarVenta() {
         const notasHistorial = `[VENTA #${ticket}] ${metodoPago}${notaExtra ? ' · ' + notaExtra : ''}`
         const ahora = new Date().toISOString()
 
-        // 1. Armar detalle de ítems para la tabla master
         const detalleItemsStr = carrito.map(l => `${l.cantidad}x ${l.nombre} (${l.variante})`).join(', ')
 
-        // 2. Insertar fila maestra en ejemplo_ventas_master (Respaldo robusto)
-        const { error: eMaster } = await supabase.from('ejemplo_ventas_master').insert([{
+        const { error: eMaster } = await supabase.from('ventas_master').insert([{
             ticket: ticket,
             cliente: nombre,
             celular: celular,
@@ -795,31 +839,30 @@ async function confirmarVenta() {
         }])
         if (eMaster) throw eMaster
 
-        // 3. Insertar filas en ejemplo_historial (Para fichas de clientas y estadísticas)
         const filasHistorial = []
         carrito.forEach(l => {
             for (let i = 0; i < l.cantidad; i++) filasHistorial.push({
-                cliente: nombre, celular, servicio_id: l.id, servicio_nombre: l.nombre, variante: l.variante,
+                cliente: nombre, celular, item_nombre: `${l.nombre} (${l.variante})`, variante: l.variante,
                 precio_cobrado: Math.round(l.precio * factor * 100) / 100, notas: notasHistorial, fecha_atencion: ahora
             })
         })
         const dif = Math.round((total - filasHistorial.reduce((s, f) => s + f.precio_cobrado, 0)) * 100) / 100
         filasHistorial[filasHistorial.length - 1].precio_cobrado = Math.round((filasHistorial[filasHistorial.length - 1].precio_cobrado + dif) * 100) / 100
 
-        const { error: eHist } = await supabase.from('ejemplo_historial').insert(filasHistorial)
+        const { error: eHist } = await supabase.from('historial_clientes').insert(filasHistorial)
         if (eHist) throw eHist
 
-        // 4. Descontar stock del catálogo
-        let fallos = 0
         for (const id of new Set(carrito.map(l => l.id))) {
-            const { error } = await supabase.from('ejemplo_catalogo').update({ stock: stockDe(id) - enCarrito(id) }).eq('id', id)
-            if (error) fallos++
+            const prodCat = obtenerProd(id)
+            const stockActual = Number(prodCat.stock ?? 0)
+            const nuevoStock = stockActual - enCarrito(id)
+            await supabase.from('productos').update({ stock: nuevoStock }).eq('id', id)
         }
 
         carrito = []; ventaCliente = null
         ;['venta-descuento', 'venta-recibido', 'venta-nota'].forEach(id => byId(id).value = id === 'venta-descuento' ? 0 : '')
         renderCarrito(); renderFichaCliente()
-        await Promise.all([cargarCatalogo(), cargarClientesDir(), cargarVentas(), cargarHistorialGeneral()])
+        await Promise.all([cargarDatosBase(), cargarClientesDir(), cargarVentas(), cargarHistorialGeneral()])
         alert(`¡Venta #${ticket} registrada con éxito por ${money(total)}!`)
     } catch (e) {
         console.error(e)
@@ -828,7 +871,7 @@ async function confirmarVenta() {
 }
 
 async function cargarVentas() {
-    const { data, error } = await supabase.from('ejemplo_ventas_master').select('*').order('registrado_el', { ascending: false }).limit(100)
+    const { data, error } = await supabase.from('ventas_master').select('*').order('registrado_el', { ascending: false }).limit(100)
     if (error) return console.error(error)
     ventasMasterCache = data || []
     renderVentas()
@@ -866,41 +909,36 @@ function renderVentas() {
     }).join('') : `<p class="text-center text-gray-500 py-4">Todavía no hay ventas registradas.</p>`
 }
 
-// --- Anular venta maestra con devolución de stock y marca de auditoría ---
+// ANULAR VENTA MASTER CON DEVOLUCIÓN DE STOCK
 window.anularVentaMaster = async function(ticket) {
     const v = ventasMasterCache.find(x => x.ticket === ticket)
     if (!v || v.estado === 'ANULADA') return
-    if (!confirm(`¿Anular la venta #${ticket} por ${money(v.total_cobrado)}? Esto marcará la venta como ANULADA en el respaldo y devolverá el stock al catálogo.`)) return
+    if (!confirm(`¿Anular la venta #${ticket} por ${money(v.total_cobrado)}? Esto marcará la venta como ANULADA y devolverá el stock.`)) return
 
     try {
-        // 1. Marcar como ANULADA en ejemplo_ventas_master (Nunca borramos la traza fiscal/operativa)
-        const { error: eUpd } = await supabase.from('ejemplo_ventas_master').update({ estado: 'ANULADA' }).eq('ticket', ticket)
+        const { error: eUpd } = await supabase.from('ventas_master').update({ estado: 'ANULADA' }).eq('ticket', ticket)
         if (eUpd) throw eUpd
 
-        // 2. Borrar las líneas correspondientes de ejemplo_historial para que no sigan sumando en estadísticas
-        await supabase.from('ejemplo_historial').delete().ilike('notas', `[VENTA #${ticket}]%`)
+        await supabase.from('historial_clientes').delete().ilike('notas', `[VENTA #${ticket}]%`)
 
-        // 3. Devolver stock al catálogo analizando el detalle de ítems o buscando en el historial anterior
-        // Como guardamos el detalle completo en master, busquemos los ítems que conformaban la venta en el historial antes de borrarlo, 
-        // o mejor aún, devolvamos el stock consultando los productos vendidos en esa venta.
-        // Vamos a extraer los productos del carrito o buscar en la tabla de historial los que tenían esa nota.
-        // Para asegurar precisión, hagamos la devolución por medio de una consulta rápida a los ítems asociados:
-        const { data: itemsVendidos } = await supabase.from('ejemplo_historial').select('servicio_id,precio_cobrado').ilike('notas', `[VENTA #${ticket}]%`)
-        
-        // Devolvemos el stock por cada ítem encontrado
-        if (itemsVendidos && itemsVendidos.length > 0) {
-            for (const item of itemsVendidos) {
-                if (item.servicio_id) {
-                    const { data: cat } = await supabase.from('ejemplo_catalogo').select('stock').eq('id', item.servicio_id).single()
-                    if (cat) {
-                        await supabase.from('ejemplo_catalogo').update({ stock: Number(cat.stock) + 1 }).eq('id', item.servicio_id)
+        if (v.detalle_items) {
+            const itemsVenta = v.detalle_items.split(',').map(i => i.trim())
+            for (const itemStr of itemsVenta) {
+                const match = itemStr.match(/^(\d+)x\s+(.+)$/)
+                if (match) {
+                    const cantDevolver = parseInt(match[1])
+                    const nombreCompleto = match[2]
+                    const productoCat = productosCache.find(c => nombreCompleto.toLowerCase().includes(c.nombre.toLowerCase()))
+                    if (productoCat) {
+                        const nuevoStock = Number(productoCat.stock || 0) + cantDevolver
+                        await supabase.from('productos').update({ stock: nuevoStock }).eq('id', productoCat.id)
                     }
                 }
             }
         }
 
-        await Promise.all([cargarCatalogo(), cargarClientesDir(), cargarVentas(), cargarHistorialGeneral()])
-        alert(`Venta #${ticket} anulada correctamente y stock devuelto.`)
+        await Promise.all([cargarDatosBase(), cargarClientesDir(), cargarVentas(), cargarHistorialGeneral()])
+        alert(`Venta #${ticket} anulada correctamente.`)
     } catch (e) {
         console.error(e)
         alert('Error al anular la venta: ' + (e.message || e))
@@ -944,111 +982,18 @@ function initVentas() {
 }
 initVentas()
 
-// ================= 10. 5TO PANEL: HISTORIAL Y REPORTES AVANZADOS =================
+// 10. HISTORIAL GENERAL
 async function cargarHistorialGeneral() {
     try {
-        const { data, error } = await supabase.from('ejemplo_historial').select('*').order('fecha_atencion', { ascending: false })
+        const { data, error } = await supabase.from('historial_clientes').select('*').order('fecha_atencion', { ascending: false })
         if (error) throw error
         historialGlobalCache = data || []
-        renderizarHistorialAvanzado()
     } catch (e) {
         console.error("Error cargando historial general:", e)
     }
 }
 
-window.renderizarHistorialAvanzado = function() {
-    const tbody = byId('tabla-historial-avanzado')
-    if (!tbody) return
-
-    const tipoFiltro = byId('filtrar-tipo-reg').value
-    const pagoFiltro = byId('filtrar-pago-reg').value
-    const periodoFiltro = byId('filtrar-periodo-reg').value
-    const textoFiltro = byId('filtrar-texto-reg').value.trim().toLowerCase()
-
-    const ahora = new Date()
-    const filtrados = historialGlobalCache.filter(item => {
-        const esVenta = (item.notas || '').startsWith('[VENTA')
-        
-        if (tipoFiltro === 'servicios' && esVenta) return false
-        if (tipoFiltro === 'ventas' && !esVenta) return false
-
-        if (pagoFiltro !== 'todos') {
-            const nota = item.notas || ''
-            if (!nota.includes(pagoFiltro)) return false
-        }
-
-        const fItem = new Date(item.fecha_atencion)
-        if (periodoFiltro === 'dia') {
-            if (fItem.toDateString() !== ahora.toDateString()) return false
-        } else if (periodoFiltro === 'semana') {
-            const ini = new Date(ahora); ini.setDate(ahora.getDate() - 7)
-            if (fItem < ini) return false
-        } else if (periodoFiltro === 'mes') {
-            if (fItem.getMonth() !== ahora.getMonth() || fItem.getFullYear() !== ahora.getFullYear()) return false
-        } else if (periodoFiltro === 'anio') {
-            if (fItem.getFullYear() !== ahora.getFullYear()) return false
-        }
-
-        if (textoFiltro) {
-            const combo = `${item.cliente} ${item.celular} ${item.servicio_nombre} ${item.variante || ''} ${item.notas || ''}`.toLowerCase()
-            if (!combo.includes(textoFiltro)) return false
-        }
-
-        return true
-    })
-
-    const totalRecaudado = filtrados.reduce((s, i) => s + Number(i.precio_cobrado || 0), 0)
-    const cantidadOps = filtrados.length
-    const promedio = cantidadOps > 0 ? totalRecaudado / cantidadOps : 0
-
-    byId('rep-total').textContent = money(totalRecaudado)
-    byId('rep-cantidad').textContent = cantidadOps
-    byId('rep-promedio').textContent = money(promedio)
-
-    if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-500">No se encontraron registros con los filtros seleccionados.</td></tr>`
-        return
-    }
-
-    tbody.innerHTML = filtrados.map(item => {
-        const esVenta = (item.notas || '').startsWith('[VENTA')
-        const fechaFmt = new Date(item.fecha_atencion).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
-        return `
-            <tr>
-                <td class="px-3 py-3 text-xs text-gray-500">${fechaFmt}</td>
-                <td class="px-3 py-3 font-semibold">
-                    ${esVenta ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">🛒 Venta</span>' : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-pink-100 text-pink-800">💅 Servicio</span>'}
-                </td>
-                <td class="px-3 py-3 font-bold">${esc(item.cliente)}<br><span class="text-xs text-green-500 font-normal">📱 ${esc(item.celular)}</span></td>
-                <td class="px-3 py-3">${esc(item.servicio_nombre)} <span class="text-xs text-pink-500 font-semibold">(${esc(item.variante || 'Estándar')})</span></td>
-                <td class="px-3 py-3 text-xs text-gray-500 truncate max-w-xs" title="${esc(item.notas)}">${esc(item.notas || 'Sin notas')}</td>
-                <td class="px-3 py-3 text-right font-black text-emerald-500">${money(item.precio_cobrado)}</td>
-            </tr>
-        `
-    }).join('')
-}
-
-window.exportarHistorialExcel = function() {
-    if (!historialGlobalCache.length) return alert('No hay datos para exportar.')
-    
-    let csv = '\uFEFFFecha,Tipo,Clienta,Celular,Item,Variante,Monto,Notas\n'
-    historialGlobalCache.forEach(i => {
-        const tipo = (i.notas || '').startsWith('[VENTA') ? 'Venta' : 'Servicio'
-        const fecha = new Date(i.fecha_atencion).toLocaleString('es-AR')
-        const notasLimpias = (i.notas || '').replace(/"/g, '""').replace(/\n/g, ' ')
-        csv += `"${fecha}","${tipo}","${i.cliente}","${i.celular}","${i.servicio_nombre}","${i.variante || 'Estándar'}",${i.precio_cobrado},"${notasLimpias}"\n`
-    })
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Reporte_Historial_${new Date().toISOString().slice(0, 10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-}
-// ================= 11. BUSCADOR MASTER Y REPORTE IMPRIMIBLE =================
+// 11. BUSCADOR MASTER Y CIERRES DE CAJA
 window.abrirBuscadorMaestro = function() {
     byId('modal-buscador-master').classList.remove('hidden')
     filtrarBuscadorMaster()
@@ -1061,11 +1006,26 @@ window.cerrarBuscadorMaestro = function() {
 window.filtrarBuscadorMaster = function() {
     const texto = (byId('master-input-buscar').value || '').trim().toLowerCase()
     const estadoSel = byId('master-filtro-estado').value
+    const periodoSel = byId('master-filtro-periodo').value
     const tbody = byId('tabla-buscador-master')
     if (!tbody) return
 
+    const ahora = new Date()
     const filtrados = ventasMasterCache.filter(v => {
         if (estadoSel !== 'todos' && v.estado !== estadoSel) return false
+
+        const fRegistro = new Date(v.registrado_el)
+        if (periodoSel === 'dia') {
+            if (fRegistro.toDateString() !== ahora.toDateString()) return false
+        } else if (periodoSel === 'semana') {
+            const ini = new Date(ahora); ini.setDate(ahora.getDate() - 7)
+            if (fRegistro < ini) return false
+        } else if (periodoSel === 'mes') {
+            if (fRegistro.getMonth() !== ahora.getMonth() || fRegistro.getFullYear() !== ahora.getFullYear()) return false
+        } else if (periodoSel === 'anio') {
+            if (fRegistro.getFullYear() !== ahora.getFullYear()) return false
+        }
+
         if (texto) {
             const combo = `${v.ticket} ${v.cliente} ${v.celular} ${v.detalle_items} ${v.metodo_pago} ${v.notas}`.toLowerCase()
             if (!combo.includes(texto)) return false
@@ -1073,8 +1033,12 @@ window.filtrarBuscadorMaster = function() {
         return true
     })
 
+    const totalFiltrado = filtrados.filter(v => v.estado === 'COMPLETADA').reduce((s, v) => s + Number(v.total_cobrado || 0), 0)
+    byId('master-resumen-label').textContent = `Total registros (${filtrados.length}):`
+    byId('master-resumen-total').textContent = money(totalFiltrado)
+
     if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">No se encontraron registros en el respaldo master.</td></tr>`
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">No se encontraron registros para este período.</td></tr>`
         return
     }
 

@@ -14,32 +14,17 @@
     <!-- DASHBOARD PRINCIPAL -->
     <div id="dashboard-section">
         <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
-              <button onclick="abrirBuscadorMaestro()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1">
-            🔍 Buscador Master & Tickets
+              <button onclick="abrirBuscadorMaestro()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1 m-4">
+            🔍 Buscador Master & Cierres de Caja
               </button>
               <style>
     @media print {
-        /* Oculta todo el cuerpo de la página por defecto */
-        body * {
-            visibility: hidden;
-        }
-        /* Muestra únicamente el contenedor del modal y su contenido */
-        #modal-buscador-master, #modal-buscador-master * {
-            visibility: visible;
-        }
-        /* Ajusta la posición para que ocupe toda la hoja al imprimir */
+        body * { visibility: hidden; }
+        #modal-buscador-master, #modal-buscador-master * { visibility: visible; }
         #modal-buscador-master {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white !important;
-            padding: 0 !important;
+            position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important;
         }
-        /* Oculta los botones de cerrar o de imprimir dentro del reporte impreso */
-        #modal-buscador-master button {
-            display: none !important;
-        }
+        #modal-buscador-master button { display: none !important; }
     }
 </style>
             <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -47,9 +32,9 @@
                     <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">💅 Panel Pro de Belleza y Estética</h1>
                     <nav class="flex gap-2">
                         <button onclick="cambiarPestana('turnos')" id="nav-btn-turnos" class="bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold">Turnos y Agenda</button>
-                        <button onclick="cambiarPestana('ventas')" id="nav-btn-ventas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">🛒 Ventas</button>
+                        <button onclick="cambiarPestana('ventas')" id="nav-btn-ventas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">🛒 Ventas (POS)</button>
                         <button onclick="cambiarPestana('catalogo')" id="nav-btn-catalogo" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">Catálogo y Precios</button>
-                        <button onclick="cambiarPestana('estadisticas')" id="nav-btn-estadisticas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">📊 Estadísticas y Ventas</button>
+                        <button onclick="cambiarPestana('estadisticas')" id="nav-btn-estadisticas" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300">📊 Estadísticas</button>
                     </nav>
                 </div>
                 <div class="flex items-center gap-3">
@@ -61,7 +46,6 @@
 
         <!-- SECCIÓN 1: TURNOS Y AGENDA -->
         <main id="seccion-turnos" class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Formulario Turno -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm h-fit border dark:border-gray-700">
                 <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Agendar Nuevo Turno</h2>
                 <form id="turno-form" class="space-y-4">
@@ -74,9 +58,9 @@
                         <input type="tel" id="cliente-celular" placeholder="Ej: 1123456789" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Seleccionar Servicio / Producto (Catálogo)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Seleccionar Servicio</label>
                         <select id="select-catalogo-servicio" required class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="">Cargando catálogo...</option>
+                            <option value="">Cargando servicios...</option>
                         </select>
                     </div>
                     <div>
@@ -95,7 +79,6 @@
                 </form>
             </div>
 
-            <!-- Listado y Calendario -->
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm md:col-span-2 space-y-8 border dark:border-gray-700">
                 <div>
                     <button id="btn-toggle-calendario" class="w-full bg-pink-50 dark:bg-gray-700 border border-pink-200 dark:border-gray-600 text-pink-700 dark:text-pink-300 font-semibold p-3 rounded-xl hover:bg-pink-100 transition flex justify-between items-center px-4">
@@ -149,7 +132,6 @@
                     </div>
                 </div>
 
-                <!-- Historial -->
                 <div class="border-t dark:border-gray-700 pt-6">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                         <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">📋 Historial y Notas de Clientas</h2>
@@ -189,9 +171,8 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Izquierda: clienta + producto -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm h-fit border dark:border-gray-700 space-y-5">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">🛒 Nueva Venta</h2>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">🛒 Nueva Venta de Productos</h2>
 
                     <div id="venta-cliente-wrap" class="relative space-y-2">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Clienta (nombre o celular)</label>
@@ -201,12 +182,12 @@
                     </div>
 
                     <div class="space-y-2 border-t dark:border-gray-700 pt-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Producto</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Producto Físico</label>
                         <div class="grid grid-cols-2 gap-2">
                             <select id="venta-filtro-categoria" class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"></select>
                             <input type="text" id="venta-buscar-producto" placeholder="Filtrar..." class="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs">
                         </div>
-                        <select id="venta-select-producto" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"><option value="">Cargando catálogo...</option></select>
+                        <select id="venta-select-producto" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"><option value="">Cargando productos...</option></select>
                         <p id="venta-info-producto" class="text-xs text-gray-500 min-h-[1rem]"></p>
                         <div class="grid grid-cols-2 gap-2">
                             <div><label class="text-xs text-gray-500">Precio unit. ($)</label><input type="number" id="venta-precio-unit" min="0" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-pink-600 font-bold text-sm"></div>
@@ -216,7 +197,6 @@
                     </div>
                 </div>
 
-                <!-- Derecha: carrito -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm md:col-span-2 border dark:border-gray-700 space-y-4">
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Detalle de la venta</h2>
                     <div class="overflow-x-auto">
@@ -271,36 +251,64 @@
             </div>
         </main>
 
-        <!-- SECCIÓN 2: CATÁLOGO Y PRECIOS (OCULTO POR DEFECTO) -->
+        <!-- SECCIÓN 2: CATÁLOGO Y PRECIOS -->
         <main id="seccion-catalogo" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 flex justify-between items-center">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Gestión de Catálogo, Servicios y Precios</h2>
-                    <p class="text-xs text-gray-500">Crea nuevos servicios, ajusta precios o edita stock de productos de belleza.</p>
+                    <p class="text-xs text-gray-500">Crea nuevos servicios o productos físicos con su respectivo tipo.</p>
                 </div>
-                <button onclick="abrirModalProducto()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-700">+ Agregar Nuevo Servicio/Producto</button>
+                <button onclick="abrirModalCatalogo('servicio')" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-700">+ Agregar Nuevo Ítem</button>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                    <thead>
-                        <tr>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Categoría</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Nombre del Servicio</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Variante / Talle</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio ($)</th>
-                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Stock</th>
-                            <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-catalogo-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando catálogo...</td></tr>
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Tabla Servicios -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-base text-pink-600">💅 Servicios (Agenda)</h3>
+                        <button onclick="abrirModalCatalogo('servicio')" class="text-xs bg-pink-100 text-pink-700 px-2.5 py-1 rounded font-bold">+ Nuevo Servicio</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Categoría / Nombre</th>
+                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio</th>
+                                    <th class="px-2 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-servicios-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr><td colspan="3" class="text-center py-4 text-gray-500">Cargando servicios...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tabla Productos -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-base text-indigo-600">📦 Productos (POS / Stock)</h3>
+                        <button onclick="abrirModalCatalogo('producto')" class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded font-bold">+ Nuevo Producto</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Nombre / Stock</th>
+                                    <th class="px-2 py-2 text-left text-xs font-bold text-gray-500 uppercase">Precio</th>
+                                    <th class="px-2 py-2 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-productos-admin" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr><td colspan="3" class="text-center py-4 text-gray-500">Cargando productos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </main>
 
-        <!-- SECCIÓN 3: ESTADÍSTICAS Y MÉTRICAS DE VENTAS (OCULTO POR DEFECTO) -->
+        <!-- SECCIÓN 3: ESTADÍSTICAS Y MÉTRICAS -->
         <main id="seccion-estadisticas" class="max-w-7xl mx-auto px-4 py-8 hidden space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
@@ -308,24 +316,24 @@
                     <h3 id="stat-recaudacion" class="text-3xl font-black text-emerald-500 mt-1">$ 0</h3>
                 </div>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Servicios / Productos Vendidos</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Atenciones / Ventas Concretadas</p>
                     <h3 id="stat-servicios-vendidos" class="text-3xl font-black text-pink-600 mt-1">0</h3>
                 </div>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Servicio Estrella / Más Vendido</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Servicio / Producto Estrella</p>
                     <h3 id="stat-servicio-estrella" class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-2 truncate">--</h3>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
-                <h3 class="font-bold text-base text-gray-800 dark:text-gray-100">Desglose de Ventas por Producto / Variante</h3>
+                <h3 class="font-bold text-base text-gray-800 dark:text-gray-100">Desglose de Ventas y Servicios</h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                         <thead>
                             <tr>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Servicio / Producto</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Ítem</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Variante</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Cantidad Vendida</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Cantidad</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Total Recaudado</th>
                             </tr>
                         </thead>
@@ -338,86 +346,100 @@
         </main>
     </div>
 
-    <!-- MODAL: AGREGAR / EDITAR PRODUCTO EN CATÁLOGO -->
-    <div id="modal-producto" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
+    <!-- MODAL: AGREGAR / EDITAR SERVICIO O PRODUCTO -->
+    <div id="modal-catalogo" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
-                <h3 id="modal-titulo-prod" class="font-bold text-gray-900 dark:text-gray-100">Nuevo Ítem en Catálogo</h3>
-                <button onclick="cerrarModalProducto()" class="text-gray-400 hover:text-white font-bold">✕</button>
+                <h3 id="modal-titulo-cat" class="font-bold text-gray-900 dark:text-gray-100">Nuevo Ítem</h3>
+                <button onclick="cerrarModalCatalogo()" class="text-gray-400 hover:text-white font-bold">✕</button>
             </div>
-            <form id="form-producto-catalogo" class="space-y-3">
-                <input type="hidden" id="prod-id">
+            <form id="form-modal-catalogo" class="space-y-3">
+                <input type="hidden" id="cat-id">
+                <input type="hidden" id="cat-tipo-tabla">
                 <div>
                     <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Categoría</label>
-                    <input type="text" id="prod-categoria" placeholder="Ej: Uñas, Pestañas, Depilación" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <input type="text" id="cat-categoria" placeholder="Ej: Uñas, Pestañas, Depilación" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Nombre del Servicio / Producto</label>
-                    <input type="text" id="prod-nombre" placeholder="Ej: Soft Gel, Lifting" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+                    <input type="text" id="cat-nombre" placeholder="Ej: Soft Gel, Esmalte" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Variante / Talle (Opcional)</label>
-                    <input type="text" id="prod-variante" placeholder="Ej: Talle M, Clásico, Bozo" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <input type="text" id="cat-variante" placeholder="Ej: Talle M, Clásico" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Precio ($)</label>
-                        <input type="number" id="prod-precio" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                        <input type="number" id="cat-precio" required class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
                     </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Stock (Si es producto físico)</label>
-                        <input type="number" id="prod-stock" value="100" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
+                    <div id="campo-stock-wrap">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Stock</label>
+                        <input type="number" id="cat-stock" placeholder="Ej: 15" class="w-full mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm">
                     </div>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModalProducto()" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
+                    <button type="button" onclick="cerrarModalCatalogo()" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
                     <button type="submit" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-pink-700">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
-    <!-- MODAL: BUSCADOR AVANZADO DE VENTAS MASTER -->
-<div id="modal-buscador-master" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-4xl p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
-        <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
-            <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">🔍 Auditoría y Buscador General de Ventas (Master)</h3>
-            <button onclick="cerrarBuscadorMaestro()" class="text-gray-400 hover:text-red-500 font-bold text-lg">✕</button>
-        </div>
-        
-        <!-- Filtros de búsqueda -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input type="text" id="master-input-buscar" oninput="filtrarBuscadorMaster()" placeholder="Buscar por clienta, celular o ticket..." class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs w-full">
-            <select id="master-filtro-estado" onchange="filtrarBuscadorMaster()" class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
-                <option value="todos">Todos los estados</option>
-                <option value="COMPLETADA">Solo Completadas</option>
-                <option value="ANULADA">Solo Anuladas</option>
-            </select>
-            <button onclick="imprimirReporteMaster()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-md text-xs font-semibold hover:bg-gray-300 transition">
-                🖨️ Imprimir / Guardar PDF
-            </button>
+
+    <!-- MODAL: BUSCADOR AVANZADO DE VENTAS MASTER Y CIERRES -->
+    <div id="modal-buscador-master" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl w-full max-w-5xl p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">🔍 Auditoría, Cierres de Caja y Buscador Master</h3>
+                <button onclick="cerrarBuscadorMaestro()" class="text-gray-400 hover:text-red-500 font-bold text-lg">✕</button>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <input type="text" id="master-input-buscar" oninput="filtrarBuscadorMaster()" placeholder="Buscar por clienta, celular o ticket..." class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs w-full">
+                
+                <select id="master-filtro-periodo" onchange="filtrarBuscadorMaster()" class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
+                    <option value="todos">📅 Histórico Completo</option>
+                    <option value="dia">🌞 Cierre Diario (Hoy)</option>
+                    <option value="semana">📆 Cierre Semanal</option>
+                    <option value="mes">🗓️ Cierre Mensual</option>
+                    <option value="anio">📈 Cierre Anual</option>
+                </select>
+
+                <select id="master-filtro-estado" onchange="filtrarBuscadorMaster()" class="p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
+                    <option value="todos">Todos los estados</option>
+                    <option value="COMPLETADA">Solo Completadas</option>
+                    <option value="ANULADA">Solo Anuladas</option>
+                </select>
+
+                <button onclick="imprimirReporteMaster()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-md text-xs font-semibold hover:bg-gray-300 transition">
+                    🖨️ Imprimir / Guardar PDF
+                </button>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex justify-between items-center text-xs font-bold">
+                <span id="master-resumen-label" class="text-gray-500">Mostrando registros filtrados:</span>
+                <span id="master-resumen-total" class="text-emerald-500 text-sm">$ 0</span>
+            </div>
+
+            <div class="overflow-y-auto flex-1 border dark:border-gray-700 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Ticket / Fecha</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Clienta</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Detalle de Ítems</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Pago / Estado</th>
+                            <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-buscador-master" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr><td colspan="5" class="text-center py-6 text-gray-500">Cargando registros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+           </div>
         </div>
 
-        <!-- Tabla de resultados scrollable -->
-        <div class="overflow-y-auto flex-1 border dark:border-gray-700 rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Ticket / Fecha</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Clienta</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Detalle de Ítems</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-500 uppercase">Pago / Estado</th>
-                        <th class="px-3 py-2 text-right text-xs font-bold text-gray-500 uppercase">Total</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-buscador-master" class="divide-y divide-gray-200 dark:divide-gray-700">
-                    <tr><td colspan="5" class="text-center py-6 text-gray-500">Cargando registros...</td></tr>
-                </tbody>
-            </table>
-        </div>
-       </div>
-    </div>
-
-    <!-- Vinculado al JS de administración power -->
-    <script type="module" src="js/admin2.js"></script>
+    <script type="module" src="js/admin.js"></script>
 </body>
 </html>
