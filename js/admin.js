@@ -643,7 +643,7 @@ window.eliminarHistorial = async function(id) {
     }
 }
 
-// 9. PANEL DE CLIENTES Y BÚSQUEDA INTELIGENTE (CORREGIDO PARA AGRUPAR CORRECTAMENTE POR NOMBRE Y CELULAR)
+// 9. PANEL DE CLIENTES Y BÚSQUEDA INTELIGENTE
 const clienteKey = (n, c) => `${String(n || '').trim().toLowerCase()}_${digits(c)}`
 
 async function cargarClientesDir() {
@@ -666,7 +666,11 @@ async function cargarClientesDir() {
 // Búsqueda en Turnos
 function seleccionarClienteTurno(c) {
     turnoClienteSeleccionado = c ? { nombre: c.nombre, celular: c.celular, key: c.key, nuevo: false } : null
-    byId('turno-cliente-buscar').value = ''
+    const inputBuscar = byId('turno-cliente-buscar')
+    if (inputBuscar) {
+        inputBuscar.value = ''
+        inputBuscar.removeAttribute('required') // Quitamos el required para que no pida completar
+    }
     byId('turno-cliente-sug').classList.add('hidden')
     renderFichaClienteTurno()
 }
@@ -675,11 +679,13 @@ function renderFichaClienteTurno() {
     const box = byId('turno-cliente-ficha')
     const inputNombreReal = byId('cliente-nombre-real')
     const inputCelReal = byId('cliente-celular-real')
+    const inputBuscar = byId('turno-cliente-buscar')
 
     if (!turnoClienteSeleccionado) {
         box.innerHTML = `<p class="text-[11px] text-gray-500">👤 Escribí arriba para buscar o registrar clienta.</p>`
         inputNombreReal.value = ''
         inputCelReal.value = ''
+        if (inputBuscar) inputBuscar.setAttribute('required', 'required') // Vuelve a requerir si se vacía
         return
     }
 
@@ -694,13 +700,14 @@ function renderFichaClienteTurno() {
         byId('tc-cel').oninput = e => { turnoClienteSeleccionado.celular = e.target.value; inputCelReal.value = e.target.value }
         inputNombreReal.value = turnoClienteSeleccionado.nombre
         inputCelReal.value = turnoClienteSeleccionado.celular
+        if (inputBuscar) inputBuscar.removeAttribute('required')
         return
     }
 
     inputNombreReal.value = turnoClienteSeleccionado.nombre
     inputCelReal.value = turnoClienteSeleccionado.celular
+    if (inputBuscar) inputBuscar.removeAttribute('required')
 
-    // Coincidencia flexible por nombre o por clave exacta en el historial
     const filas = historialCliCache.filter(r => {
         const rKey = clienteKey(r.cliente, r.celular)
         return rKey === turnoClienteSeleccionado.key || String(r.cliente || '').trim().toLowerCase() === String(turnoClienteSeleccionado.nombre || '').trim().toLowerCase()
@@ -725,6 +732,9 @@ window.seleccionarClienteTurnoNull = () => seleccionarClienteTurno(null)
 function initTurnoClienteBuscador() {
     const inp = byId('turno-cliente-buscar'), box = byId('turno-cliente-sug')
     if (!inp || !box) return
+
+    // Aseguramos que arranque con required solo si no hay clienta seleccionada
+    if (!turnoClienteSeleccionado) inp.setAttribute('required', 'required')
 
     inp.addEventListener('input', () => {
         const txt = inp.value.trim(), q = txt.toLowerCase(), qd = digits(txt)
@@ -1027,7 +1037,7 @@ window.anularVentaMaster = async function(ticket) {
 
     const passwordIngresado = prompt(`🔒 SEGURIDAD: Ingrese la contraseña de autorización para anular la venta #${ticket}:`)
     if (passwordIngresado === null) return
-    if (passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
+    if (passwordIngselado !== PIN_SEGURIDAD_ANULACION && passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
         return alert("❌ Contraseña incorrecta. Operación cancelada por seguridad.")
     }
 
