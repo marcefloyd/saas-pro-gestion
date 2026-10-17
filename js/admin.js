@@ -126,8 +126,8 @@ if (btnMesSiguiente) {
 
 // 2. NAVEGACIÓN ENTRE PESTAÑAS
 window.cambiarPestana = function(pestana) {
-    const activo = "bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm"
-    const inactivo = "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300"
+    const activo = "bg-pink-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-sm w-full md:w-auto text-center"
+    const inactivo = "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-300 w-full md:w-auto text-center"
     ;['turnos', 'ventas', 'catalogo', 'estadisticas'].forEach(p => {
         const sec = document.getElementById(`seccion-${p}`)
         const btn = document.getElementById(`nav-btn-${p}`)
@@ -178,7 +178,7 @@ function poblarSelectorServiciosTurnos() {
     }
 }
 
-// 4. AGENDAR NUEVO TURNO (Con Buscador de Clientas, Descuentos y Método de Pago)
+// 4. AGENDAR NUEVO TURNO
 if (turnoForm) {
     turnoForm.addEventListener('submit', async (e) => {
         e.preventDefault()
@@ -393,7 +393,6 @@ function renderizarCalendario() {
     }
 }
 
-// COMPLETAR TURNO: Inyecta en ventas_master e historial_clientes
 window.completarTurno = async function(id) {
     const turno = listaTurnosCache.find(t => t.id == id)
     if (!turno) return alert("Error: No se encontró el turno.")
@@ -597,7 +596,7 @@ async function calcularEstadisticasVentas() {
     } catch (e) { console.error("Error calculando estadísticas:", e) }
 }
 
-// 8. BUSCADOR RÁPIDO DE HISTORIAL
+// 8. BUSCAR EN HISTORIAL (CON ANULACIÓN SEGURA SIN BORRAR)
 window.verHistorialPorBusqueda = async function(parametro) {
     const texto = parametro || buscadorCelular.value.trim()
     if (!texto) return alert("Ingrese un nombre o celular.")
@@ -617,26 +616,38 @@ window.verHistorialPorBusqueda = async function(parametro) {
 
         data.forEach(item => {
             const fechaFmt = new Date(item.fecha_atencion).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })
+            
+            let ticketAsociado = null
+            if (item.notas && item.notas.includes('[VENTA #')) {
+                const matchTicket = item.notas.match(/\[VENTA #([A-Z0-9]+)\]/)
+                if (matchTicket) ticketAsociado = matchTicket[1]
+            }
+
             const tr = document.createElement('tr')
             tr.innerHTML = `
                 <td class="px-2.5 py-2.5 font-bold">${item.cliente}</td>
                 <td class="px-2.5 py-2.5">${item.celular}</td>
-                <td class="px-2.5 py-2.5">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.item_nombre}</td>
+                <td class="px-2.5 py-2.5">${(item.notas || '').startsWith('[VENTA') ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold mr-1">🛒 VENTA</span>' : ''}${item.item_nombre} <br><span class="text-[10px] text-gray-400">${esc(item.notas)}</span></td>
                 <td class="px-2.5 py-2.5 font-medium"><strong class="text-emerald-500">$${item.precio_cobrado}</strong><br><span class="text-[11px] text-gray-400">${fechaFmt}</span></td>
                 <td class="px-2.5 py-2.5 text-right">
-                    <button onclick="eliminarHistorial('${item.id}')" class="text-red-500 text-xs font-bold">Borrar</button>
+                    <button onclick="anularRegistroHistorial('${item.id}', '${ticketAsociado || ''}')" class="text-red-500 text-xs font-bold bg-red-50 dark:bg-red-950 px-2 py-1 rounded">Anular</button>
                 </td>
             `
             historialTabla.appendChild(tr)
         })
     } catch (e) { console.error(e) }
 }
-
 if (btnBuscar) btnBuscar.onclick = () => window.verHistorialPorBusqueda()
 if (buscadorCelular) buscadorCelular.onkeypress = (e) => { if (e.key === 'Enter') window.verHistorialPorBusqueda() }
-if (btnLimpiar) btnLimpiar.onclick = () => { buscadorCelular.value = ''; historialTabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Ingrese un nombre o número para buscar.</td></tr>` }
+if (btnLimpiar) btnLimpiar.onclick = () => { buscadorCelular.value = ''; historialTabla.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">Ingrese un nombre o número para buscar en el historial.</td></tr>` }
 
-window.eliminarHistorial = async function(id) {
+// Función puente para disparar la anulación de la venta master desde el historial de clientas
+window.anularVentaMasterDesdeHistorial = async function(ticket) {
+    await window.anularVentaMaster(ticket)
+    window.verHistorialPorBusqueda(buscadorCelular.value.trim())
+}
+
+window.eliminarHistorialDirecto = async function(id) {
     if (confirm("¿Borrar este registro del historial?")) {
         await supabase.from('historial_clientes').delete().eq('id', id)
         window.verHistorialPorBusqueda(buscadorCelular.value.trim())
@@ -663,13 +674,12 @@ async function cargarClientesDir() {
     clientesDir = [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre))
 }
 
-// Búsqueda en Turnos
 function seleccionarClienteTurno(c) {
     turnoClienteSeleccionado = c ? { nombre: c.nombre, celular: c.celular, key: c.key, nuevo: false } : null
     const inputBuscar = byId('turno-cliente-buscar')
     if (inputBuscar) {
         inputBuscar.value = ''
-        inputBuscar.removeAttribute('required') // Quitamos el required para que no pida completar
+        inputBuscar.removeAttribute('required')
     }
     byId('turno-cliente-sug').classList.add('hidden')
     renderFichaClienteTurno()
@@ -685,7 +695,7 @@ function renderFichaClienteTurno() {
         box.innerHTML = `<p class="text-[11px] text-gray-500">👤 Escribí arriba para buscar o registrar clienta.</p>`
         inputNombreReal.value = ''
         inputCelReal.value = ''
-        if (inputBuscar) inputBuscar.setAttribute('required', 'required') // Vuelve a requerir si se vacía
+        if (inputBuscar) inputBuscar.setAttribute('required', 'required')
         return
     }
 
@@ -733,7 +743,6 @@ function initTurnoClienteBuscador() {
     const inp = byId('turno-cliente-buscar'), box = byId('turno-cliente-sug')
     if (!inp || !box) return
 
-    // Aseguramos que arranque con required solo si no hay clienta seleccionada
     if (!turnoClienteSeleccionado) inp.setAttribute('required', 'required')
 
     inp.addEventListener('input', () => {
@@ -762,7 +771,6 @@ function initTurnoClienteBuscador() {
 }
 initTurnoClienteBuscador()
 
-// Búsqueda en Ventas (POS)
 function seleccionarCliente(c) {
     ventaCliente = c ? { nombre: c.nombre, celular: c.celular, key: c.key, nuevo: false } : null
     byId('venta-cliente-buscar').value = ''
@@ -908,7 +916,6 @@ function actualizarTotales() {
     byId('venta-vuelto').textContent = isNaN(rec) || t.total <= 0 ? '' : (rec >= t.total ? 'Vuelto: ' + money(rec - t.total) : 'Faltan ' + money(t.total - rec))
 }
 
-// CONFIRMAR VENTA EN POS
 async function confirmarVenta() {
     if (!carrito.length) return alert('El carrito está vacío.')
     let nombre = 'Consumidor final', celular = '-'
@@ -1030,14 +1037,13 @@ function renderVentas() {
     }).join('') : `<p class="text-center text-gray-500 py-4">Todavía no hay ventas registradas.</p>`
 }
 
-// ANULAR VENTA MASTER CON CONTRASEÑA DE SEGURIDAD Y DEVOLUCIÓN DE STOCK
 window.anularVentaMaster = async function(ticket) {
     const v = ventasMasterCache.find(x => x.ticket === ticket)
     if (!v || v.estado === 'ANULADA') return
 
     const passwordIngresado = prompt(`🔒 SEGURIDAD: Ingrese la contraseña de autorización para anular la venta #${ticket}:`)
     if (passwordIngresado === null) return
-    if (passwordIngselado !== PIN_SEGURIDAD_ANULACION && passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
+    if (passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
         return alert("❌ Contraseña incorrecta. Operación cancelada por seguridad.")
     }
 
@@ -1118,7 +1124,6 @@ function initVentas() {
 }
 initVentas()
 
-// 10. HISTORIAL GENERAL
 async function cargarHistorialGeneral() {
     try {
         const { data, error } = await supabase.from('historial_clientes').select('*').order('fecha_atencion', { ascending: false })
@@ -1129,7 +1134,6 @@ async function cargarHistorialGeneral() {
     }
 }
 
-// 11. BUSCADOR MASTER Y CIERRES DE CAJA
 window.abrirBuscadorMaestro = function() {
     byId('modal-buscador-master').classList.remove('hidden')
     filtrarBuscadorMaster()
@@ -1210,4 +1214,37 @@ window.filtrarBuscadorMaster = function() {
 
 window.imprimirReporteMaster = function() {
     window.print()
+}
+// NUEVA FUNCIÓN: Anula de forma segura sin borrar físicamente del sistema
+window.anularRegistroHistorial = async function(idHistorial, ticket) {
+    const passwordIngresado = prompt(`🔒 SEGURIDAD: Ingrese la contraseña de autorización para anular este registro:`)
+    if (passwordIngresado === null) return
+    if (passwordIngresado !== PIN_SEGURIDAD_ANULACION) {
+        return alert("❌ Contraseña incorrecta. Operación cancelada por seguridad.")
+    }
+
+    if (!confirm("✔ Contraseña aceptada. ¿Desea anular este registro? Quedará marcado como anulado en el sistema y no se eliminará.")) return
+
+    try {
+        if (ticket) {
+            await supabase.from('ventas_master').update({ estado: 'ANULADA' }).eq('ticket', ticket)
+        }
+
+        const registroActual = historialCliCache.find(r => r.id == idHistorial) || {}
+        const notaAnulada = `[ANULADO] ${registroActual.notas || 'Sin notas previa'}`
+        
+        const { error } = await supabase.from('historial_clientes').update({ 
+            precio_cobrado: 0, 
+            notas: notaAnulada 
+        }).eq('id', idHistorial)
+
+        if (error) throw error
+
+        alert("Registro anulado correctamente. Queda trazado en el sistema con monto $0 y marcado como anulado.")
+        window.verHistorialPorBusqueda(buscadorCelular.value.trim())
+        await cargarVentas()
+    } catch (e) {
+        console.error(e)
+        alert("Hubo un error al anular el registro.")
+    }
 }
