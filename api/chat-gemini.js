@@ -64,8 +64,7 @@ REGLAS ESTRICTAS DE COMPORTAMIENTO:
                     }
                 ],
                 generationConfig: {
-                    temperature: 0.2,
-                    maxOutputTokens: 300
+                    temperature: 0.2
                 }
             })
         });
