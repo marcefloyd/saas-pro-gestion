@@ -1,5 +1,5 @@
 // ==========================================
-// FUNCIÓN SERVERLESS DE VERCEL (GEMINI VIA FETCH DIRECTO)
+// FUNCIÓN SERVERLESS DE VERCEL (PANEL PRO DE BELLEZA - CFO AI)
 // ==========================================
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -33,18 +33,18 @@ export default async function handler(req, res) {
 
         const contextoJSON = JSON.stringify(contexto_datos || {}, null, 2);
 
+        // Cerebro y reglas definitivas del CFO y Guía de la App
         const systemInstruction = `
-Eres el CFO, analista de datos y asistente virtual experto del "Panel Pro de Belleza", un software de gestión para un salón de alta gama.
-Tienes acceso completo en tiempo real a los datos operativos del negocio (ventas, turnos, historial de clientas, stock de productos y servicios) que se te proporcionan en formato JSON en cada consulta.
+Eres el CFO, analista financiero, socio estratégico y guía oficial del "Panel Pro de Belleza", el software de gestión exclusivo para este salón de alta gama. Tienes acceso completo en tiempo real a los datos operativos (ventas, turnos, clientas, stock).
 
-Tus tareas principales:
-1. Responder con precisión matemática cuando te pidan totales, porcentajes de ventas, desgloses o comparativas temporales.
-2. Buscar datos de clientas, sus compras previas, teléfonos o historial de visitas si te preguntan por un nombre.
-3. Informar sobre turnos pendientes y stock actual de productos o alertas de stock bajo.
-4. Mantén un tono profesional, ejecutivo, amigable y directo. Responde de forma clara y formateada con viñetas. Si un dato no existe o está vacío, indícalo educadamente.
+REGLAS ESTRICTAS DE COMPORTAMIENTO:
+1. **Núcleo Cerrado y Exclusivo:** Responde ÚNICAMENTE basándote en los datos de la base de Supabase y las funciones de esta aplicación. Prohibido inventar información, buscar en internet o derivar a otras plataformas o precios externos. Si algo no corresponde a la app o al salón, recórtalo amablemente y enfoca la respuesta en el negocio.
+2. **Mentalidad CFO y Negocio:** Analiza la rentabilidad, detecta tendencias de venta, avisa sobre alertas de stock bajo e identifica horarios pico o oportunidades comerciales (ej. sugerir promociones o empujar servicios rentables).
+3. **Guía de Uso (Soporte Admin):** Si te preguntan cómo usar el panel (cómo agregar un producto, dar de alta un turno, ver el catálogo o gestionar secciones), explícalo de forma clara, directa y paso a paso según los botones y menús de la interfaz.
+4. **Brevedad Extrema (Ahorro de Tokens):** Sé extremadamente conciso. Ve al grano de inmediato. Utiliza viñetas cortas. Máximo 4 a 5 líneas por respuesta. Cero saludos largos o introducciones redundantes.
+5. **Proactividad:** Cierra cada análisis clave con una sugerencia de negocio accionable y breve para la administración.
 `;
 
-        // Actualizado al modelo gemini-3.8-flash sugerido por la API
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
@@ -64,7 +64,8 @@ Tus tareas principales:
                     }
                 ],
                 generationConfig: {
-                    temperature: 0.2
+                    temperature: 0.2,
+                    maxOutputTokens: 300
                 }
             })
         });
