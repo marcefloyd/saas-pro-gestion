@@ -1247,4 +1247,104 @@ window.anularRegistroHistorial = async function(idHistorial, ticket) {
         console.error(e)
         alert("Hubo un error al anular el registro.")
     }
-}
+}// ==========================================
+// ASISTENTE INTELIGENTE CON API DE GEMINI Y SUPABASE
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('chat-toggle-btn')
+    const closeBtn = document.getElementById('chat-close-btn')
+    const chatWindow = document.getElementById('chat-window')
+    const enviarBtn = document.getElementById('chat-enviar-btn')
+    const inputMsg = document.getElementById('chat-input')
+    const contenedorMsgs = document.getElementById('chat-mensajes')
+
+    if (!toggleBtn || !chatWindow) return
+
+    toggleBtn.onclick = () => chatWindow.classList.toggle('hidden')
+    closeBtn.onclick = () => chatWindow.classList.add('hidden')
+
+    const enviarMensaje = async () => {
+        const texto = inputMsg.value.trim()
+        if (!texto) return
+
+        agregarMensajeUI(texto, 'usuario')
+        inputMsg.value = ''
+        contenedorMsgs.scrollTop = contenedorMsgs.scrollHeight
+
+        const idCarga = agregarMensajeUI('Analizando con IA...', 'ia', true)
+
+        try {
+            // 1. Recopilar datos frescos de Supabase antes de consultar a Gemini
+            const contextoNegocio = await obtenerContextoSupabaseParaIA()
+
+            // 2. Enviar la pregunta y el contexto fresco a tu endpoint / API de Gemini
+            const respuestaIA = await consultarGeminiConContexto(texto, contextoNegocio)
+            
+            reemplazarMensajeCarga(idCarga, respuestaIA)
+        } catch (err) {
+            console.error(err)
+            reemplazarMensajeCarga(idCarga, 'Disculpa, tuve un problema al procesar la consulta con la IA.')
+        }
+    }
+
+    enviarBtn.onclick = enviarMensaje
+    inputMsg.onkeypress = (e) => { if (e.key === 'Enter') enviarMensaje() }
+
+    function agregarMensajeUI(msg, tipo) {
+        const div = document.createElement('div')
+        const id = 'msg-' + Date.now()
+        div.id = id
+        div.className = tipo === 'usuario' 
+            ? 'ml-auto bg-pink-600 text-white p-2.5 rounded-xl rounded-tr-none max-w-[85%]' 
+            : 'bg-gray-100 dark:bg-gray-800 p-2.5 rounded-xl rounded-tl-none max-w-[85%] text-gray-800 dark:text-gray-200'
+        div.textContent = msg
+        contenedorMsgs.appendChild(div)
+        contenedorMsgs.scrollTop = contenedorMsgs.scrollHeight
+        return id
+    }
+
+    function reemplazarMensajeCarga(id, textoFinal) {
+        const el = document.getElementById(id)
+        if (el) el.textContent = textoFinal
+        contenedorMsgs.scrollTop = contenedorMsgs.scrollHeight
+    }
+
+    // 📊 FUNCIÓN QUE EMPAQUETA TODOS LOS DATOS DE SUPABASE EN JSON/TEXTO
+    async function obtenerContextoSupabaseParaIA() {
+        const [resVentas, resTurnos, resHistorial, resProd, resServ] = await Promise.all([
+            supabase.from('ventas_master').select('*'),
+            supabase.from('turnos').select('*'),
+            supabase.from('historial_clientes').select('*'),
+            supabase.from('productos').select('*'),
+            supabase.from('servicios').select('*')
+        ])
+
+        return {
+            ventas: resVentas.data || [],
+            turnos: resTurnos.data || [],
+            historial_clientas: resHistorial.data || [],
+            productos: resProd.data || [],
+            servicios: resServ.data || [],
+            fecha_actual: new Date().toISOString()
+        }
+    }
+
+    // 🤖 FUNCIÓN QUE LLAMA A TU API / BACKEND CON GEMINI
+    async function consultarGeminiConContexto(preguntaUsuario, contexto) {
+        // Aquí realizas el fetch a tu función serverless en Vercel (por ejemplo, /api/chat-gemini)
+        // que es la encargada de invocar la SDK de Google Gemini manteniendo oculta tu API Key.
+        const response = await fetch('/api/chat-gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pregunta: preguntaUsuario,
+                contexto_datos: contexto
+            })
+        })
+
+        if (!response.ok) throw new Error('Error en la comunicación con el servidor de IA')
+        
+        const data = await response.json()
+        return data.respuesta || 'No se obtuvo respuesta de la IA.'
+    }
+})

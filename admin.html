@@ -505,5 +505,38 @@
         </div>
 
     <script type="module" src="js/admin.js"></script>
+    <!-- ASISTENTE VIRTUAL INTELIGENTE (CHATBOT SAAS) -->
+<div id="chat-widget-container" class="fixed bottom-5 right-5 z-50">
+    <!-- Botón Flotante para abrir/cerrar -->
+    <button id="chat-toggle-btn" class="bg-pink-600 hover:bg-pink-700 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-105">
+        💬
+    </button>
+
+    <!-- Ventana del Chat (Oculta por defecto) -->
+    <div id="chat-window" class="hidden absolute bottom-16 right-0 w-80 sm:w-96 bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[500px]">
+        <!-- Cabecera del Chat -->
+        <div class="bg-pink-600 text-white p-3.5 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                <h3 class="font-bold text-xs">Asistente IA - Panel Pro</h3>
+            </div>
+            <button id="chat-close-btn" class="text-white hover:text-gray-200 font-bold text-sm">✕</button>
+        </div>
+
+        <!-- Cuerpo de Mensajes -->
+        <div id="chat-mensajes" class="p-3.5 flex-1 overflow-y-auto space-y-3 text-xs min-h-[280px] max-h-[350px]">
+            <div class="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-xl rounded-tl-none max-w-[85%] text-gray-800 dark:text-gray-200">
+                ¡Hola! Soy tu asistente de negocio. Pregúntame sobre las ventas de hoy, turnos o stock de productos y te responderé con datos en tiempo real de Supabase. 🚀
+            </div>
+        </div>
+
+        <!-- Barra de Entrada de Texto -->
+        <div class="p-3 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex gap-2">
+            <input type="text" id="chat-input" placeholder="Ej: ¿Cuánto vendimos hoy?" class="flex-1 p-2 border dark:border-gray-700 rounded-lg text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none">
+            <button id="chat-enviar-btn" class="bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition">Enviar</button>
+        </div>
+    </div>
+</div>
+    
 </body>
 </html>
