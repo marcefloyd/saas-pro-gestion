@@ -1,8 +1,6 @@
 // ==========================================
-// FUNCIÓN SERVERLESS DE VERCEL (GEMINI + SUPABASE)
+// FUNCIÓN SERVERLESS DE VERCEL (GEMINI VIA FETCH DIRECTO)
 // ==========================================
-import { GoogleGenAI } from '@google/genai';
-
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,7 +31,6 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Falta configurar GEMINI_API_KEY en Vercel.' });
         }
 
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const contextoJSON = JSON.stringify(contexto_datos || {}, null, 2);
 
         const systemInstruction = `
@@ -47,28 +44,43 @@ Tus tareas principales:
 4. Mantén un tono profesional, ejecutivo, amigable y directo. Responde de forma clara y formateada con viñetas. Si un dato no existe o está vacío, indícalo educadamente.
 `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                {
-                    role: 'user',
-                    parts: [
-                        { text: `CONTEXTO ACTUAL DE LA BASE DE DATOS (SUPABASE):\n${contextoJSON}` },
-                        { text: `PREGUNTA DEL ADMINISTRADOR: ${pregunta}` }
-                    ]
+        // Llamada directa a la API oficial de Gemini por HTTP POST (Sin dependencias raras)
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                system_instruction: {
+                    parts: [{ text: systemInstruction }]
+                },
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: `CONTEXTO ACTUAL DE LA BASE DE DATOS (SUPABASE):\n${contextoJSON}` },
+                            { text: `PREGUNTA DEL ADMINISTRADOR: ${pregunta}` }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.2
                 }
-            ],
-            config: {
-                systemInstruction: systemInstruction,
-                temperature: 0.2,
-            }
+            })
         });
 
-        const respuestaTexto = response.text || 'No se pudo generar una respuesta.';
+        const data = await geminiResponse.json();
+
+        if (!geminiResponse.ok) {
+            throw new Error(data.error?.message || 'Error al comunicarse con la API de Gemini.');
+        }
+
+        const respuestaTexto = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No se pudo generar una respuesta.';
+
         return res.status(200).json({ respuesta: respuestaTexto });
 
     } catch (error) {
-        console.error('Error detallado en la API de Gemini:', error);
-        return res.status(500).json({ error: 'Error interno al procesar la inteligencia artificial: ' + error.message });
+        console.error('Error detallado:', error);
+        return res.status(500).json({ error: 'Error interno: ' + error.message });
     }
 }
