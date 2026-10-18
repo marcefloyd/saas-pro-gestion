@@ -44,8 +44,8 @@ Tus tareas principales:
 4. Mantén un tono profesional, ejecutivo, amigable y directo. Responde de forma clara y formateada con viñetas. Si un dato no existe o está vacío, indícalo educadamente.
 `;
 
-        // Llamada directa a la API oficial de Gemini por HTTP POST (Sin dependencias raras)
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        // Usamos el modelo estable gemini-1.5-flash
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
